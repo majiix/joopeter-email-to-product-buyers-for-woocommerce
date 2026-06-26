@@ -1,0 +1,841 @@
+﻿/* Container spacing */
+.joopeterewb-email-box-container {
+    padding: 10px 0;
+}
+
+/* Label styling */
+.joopeterewb-email-box-container label {
+    font-weight: 600;
+    display: block;
+    margin-bottom: 5px;
+}
+
+/* Recipient count styling */
+.joopeterewb-recipient-count {
+    background: #f6f7f7;
+    border: 1px solid #c3c4c7;
+    border-left-width: 4px;
+    border-left-color: #2271b1;
+    padding: 8px 12px;
+    margin: 10px 0 15px;
+    font-size: 13px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.joopeterewb-count-wrapper {
+    display: flex;
+    align-items: center;
+}
+
+.joopeterewb-recipient-count .dashicons-groups {
+    color: #2271b1;
+    margin-right: 4px;
+}
+
+#joopeterewb-count-value {
+    margin-right: 4px;
+}
+
+/* Refresh button styling */
+.joopeterewb-refresh-btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-height: 24px !important;
+    padding: 0 6px !important;
+    line-height: 1 !important;
+}
+
+.joopeterewb-refresh-btn .dashicons {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    margin: 0 !important;
+    vertical-align: middle !important;
+    line-height: 1 !important;
+}
+
+/* Spinner animation for custom icon */
+@keyframes joopeterewb-spin {
+    100% { transform: rotate(360deg); }
+}
+
+.joopeterewb-spin {
+    animation: joopeterewb-spin 2s infinite linear;
+}
+
+/* Editor wrapper spacing */
+.joopeterewb-editor-wrapper {
+    margin-bottom: 15px;
+}
+
+/* Feedback message area */
+#joopeterewb-email-feedback {
+    margin: 10px 0;
+    padding: 5px;
+    display: none;
+}
+
+/* Spinner adjustment */
+#joopeterewb_email_spinner {
+    float: none;
+}
+
+/* ==========================================================================
+   Email Logs Dashboard Styles
+   ========================================================================== */
+
+.joopeterewb-logs-page-wrapper {
+    margin: 20px 20px 0 0;
+}
+
+/* Header banner with gradient */
+.joopeterewb-header-banner {
+    background: linear-gradient(135deg, #2271b1 0%, #135e96 100%);
+    color: #ffffff;
+    padding: 24px 30px;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.joopeterewb-header-banner h1 {
+    color: #ffffff;
+    font-size: 28px;
+    font-weight: 700;
+    margin: 0 0 8px;
+    padding: 0;
+    line-height: 1.2;
+}
+
+.joopeterewb-header-banner p {
+    margin: 0;
+    font-size: 14px;
+    opacity: 0.9;
+}
+
+/* Action buttons container */
+.joopeterewb-action-buttons {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+/* Retry button */
+.joopeterewb-retry-btn {
+    border-radius: 4px !important;
+    padding: 10px 20px !important;
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 8px !important;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+    height: auto !important;
+    line-height: 1 !important;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1) !important;
+}
+
+.joopeterewb-retry-btn:active:not(:disabled) {
+    transform: scale(0.98);
+}
+
+.joopeterewb-retry-btn:disabled {
+    background: rgba(34, 113, 177, 0.5) !important;
+    color: rgba(255, 255, 255, 0.7) !important;
+    cursor: not-allowed;
+    box-shadow: none !important;
+    border-color: transparent !important;
+}
+
+/* Clear success button */
+.joopeterewb-clear-success-btn {
+    background: #fcf0f0 !important;
+    color: #d63638 !important;
+    border: 1px solid #d63638 !important;
+    border-radius: 4px !important;
+    padding: 10px 20px !important;
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 8px !important;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+    height: auto !important;
+    line-height: 1 !important;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05) !important;
+}
+
+.joopeterewb-clear-success-btn:hover:not(:disabled) {
+    background: #f9e1e1 !important;
+}
+
+.joopeterewb-clear-success-btn:active:not(:disabled) {
+    transform: scale(0.98);
+}
+
+.joopeterewb-clear-success-btn:disabled {
+    background: #f6f7f7 !important;
+    color: #c3c4c7 !important;
+    border-color: #dcdcde !important;
+    cursor: not-allowed;
+    box-shadow: none !important;
+}
+
+/* Clear button on header */
+.joopeterewb-clear-btn {
+    background: #e35a5a !important;
+    color: #ffffff !important;
+    border: none !important;
+    border-radius: 4px !important;
+    padding: 10px 20px !important;
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 8px !important;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+    height: auto !important;
+    line-height: 1 !important;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1) !important;
+}
+
+.joopeterewb-clear-btn .dashicons,
+.joopeterewb-clear-success-btn .dashicons,
+.joopeterewb-retry-btn .dashicons {
+    margin: 0 !important;
+    vertical-align: middle !important;
+    line-height: 1 !important;
+}
+
+.joopeterewb-clear-btn:hover:not(:disabled) {
+    background: #cf4e4e !important;
+}
+
+.joopeterewb-clear-btn:active:not(:disabled) {
+    transform: scale(0.98);
+}
+
+.joopeterewb-clear-btn:disabled {
+    background: rgba(255, 255, 255, 0.15) !important;
+    color: rgba(255, 255, 255, 0.5) !important;
+    cursor: not-allowed;
+    box-shadow: none !important;
+}
+
+/* Statistics cards container */
+.joopeterewb-stats-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 20px;
+    margin-bottom: 24px;
+}
+
+.joopeterewb-stat-card {
+    background: #ffffff;
+    border: 1px solid #c3c4c7;
+    border-radius: 8px;
+    padding: 20px 24px;
+    display: flex;
+    align-items: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.joopeterewb-stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 12px rgba(0, 0, 0, 0.05);
+}
+
+.joopeterewb-stat-icon {
+    font-size: 36px;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 20px;
+}
+
+.joopeterewb-stat-info h3 {
+    font-size: 24px;
+    font-weight: 700;
+    margin: 0 0 4px;
+    color: #1d2327;
+}
+
+.joopeterewb-stat-info p {
+    margin: 0;
+    font-size: 13px;
+    color: #646970;
+    font-weight: 500;
+}
+
+/* Specific stat styles */
+.joopeterewb-stat-total {
+    border-left: 5px solid #2271b1;
+}
+.joopeterewb-stat-total .joopeterewb-stat-icon {
+    background: #eef6fc;
+    color: #2271b1;
+}
+.joopeterewb-stat-total .joopeterewb-stat-icon .dashicons {
+    font-size: 28px;
+    width: 28px;
+    height: 28px;
+}
+
+.joopeterewb-stat-success {
+    border-left: 5px solid #00a32a;
+}
+.joopeterewb-stat-success .joopeterewb-stat-icon {
+    background: #edf8ee;
+    color: #00a32a;
+}
+.joopeterewb-stat-success .joopeterewb-stat-icon .dashicons {
+    font-size: 28px;
+    width: 28px;
+    height: 28px;
+}
+
+.joopeterewb-stat-failed {
+    border-left: 5px solid #d63638;
+}
+.joopeterewb-stat-failed .joopeterewb-stat-icon {
+    background: #fcf0f0;
+    color: #d63638;
+}
+.joopeterewb-stat-failed .joopeterewb-stat-icon .dashicons {
+    font-size: 28px;
+    width: 28px;
+    height: 28px;
+}
+
+/* Filter bar */
+.joopeterewb-filter-bar {
+    background: #ffffff;
+    border: 1px solid #c3c4c7;
+    border-radius: 8px;
+    padding: 16px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+.joopeterewb-search-box-wrapper {
+    position: relative;
+    flex-grow: 1;
+    max-width: 400px;
+}
+
+.joopeterewb-search-box-wrapper .dashicons-search {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #8c8f94;
+}
+
+.joopeterewb-search-box-wrapper input[type="text"] {
+    width: 100%;
+    padding: 8px 12px 8px 36px;
+    border-radius: 4px;
+    border: 1px solid #8c8f94;
+    font-size: 14px;
+    line-height: 1.4;
+    height: auto;
+}
+
+.joopeterewb-search-box-wrapper input[type="text"]:focus {
+    border-color: #2271b1;
+    box-shadow: 0 0 0 1px #2271b1;
+}
+
+.joopeterewb-filter-status-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.joopeterewb-filter-status-wrapper label {
+    font-weight: 600;
+    font-size: 13px;
+    color: #50575e;
+}
+
+.joopeterewb-filter-status-wrapper select {
+    padding: 6px 12px;
+    border-radius: 4px;
+    border: 1px solid #8c8f94;
+    font-size: 13px;
+    background-color: #ffffff;
+}
+
+/* Logs table and card styling */
+.joopeterewb-table-container {
+    background: #ffffff;
+    border: 1px solid #c3c4c7;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+.joopeterewb-logs-table {
+    border: none !important;
+    margin: 0 !important;
+}
+
+.joopeterewb-logs-table th {
+    font-weight: 600 !important;
+    background: #f6f7f7;
+    border-bottom: 2px solid #c3c4c7 !important;
+    padding: 12px 16px !important;
+    color: #1d2327 !important;
+}
+
+.joopeterewb-logs-table td {
+    padding: 14px 16px !important;
+    vertical-align: middle !important;
+    color: #2c3338;
+}
+
+.joopeterewb-logs-table tr:last-child td {
+    border-bottom: none !important;
+}
+
+.joopeterewb-logs-table .column-recipient strong {
+    font-size: 14px;
+    color: #1d2327;
+}
+
+.joopeterewb-logs-table .column-product a {
+    font-weight: 500;
+    color: #2271b1;
+    text-decoration: none;
+}
+
+.joopeterewb-logs-table .column-product a:hover {
+    color: #135e96;
+    text-decoration: underline;
+}
+
+.joopeterewb-logs-table .column-date {
+    color: #646970;
+    font-size: 13px;
+}
+
+/* Status badges */
+.joopeterewb-status-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.joopeterewb-status-success {
+    background-color: #d1f2d9;
+    color: #007a1c;
+}
+
+.joopeterewb-status-failed {
+    background-color: #fbd5d5;
+    color: #b31b1b;
+}
+
+/* Custom view message button */
+.joopeterewb-view-msg-btn {
+    font-weight: 600 !important;
+    border-color: #2271b1 !important;
+    color: #2271b1 !important;
+    transition: background 0.15s ease, color 0.15s ease !important;
+}
+
+.joopeterewb-view-msg-btn:hover {
+    background-color: #2271b1 !important;
+    color: #ffffff !important;
+}
+
+/* No items row styling */
+.joopeterewb-logs-table tr.no-items td {
+    padding: 40px !important;
+    text-align: center !important;
+    font-size: 15px;
+    color: #646970;
+    font-style: italic;
+    background: #ffffff !important;
+}
+
+/* Modern preview modal */
+.joopeterewb-modal {
+    display: none;
+    position: fixed;
+    z-index: 100000; /* Must overlay WordPress Admin bar and menus */
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(30, 30, 30, 0.4);
+    backdrop-filter: blur(5px);
+    align-items: center;
+    justify-content: center;
+}
+
+.joopeterewb-modal-content {
+    background-color: #ffffff;
+    margin: auto;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 650px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    overflow: hidden;
+    animation: joopeterewb-modal-fade 0.25s ease-out;
+}
+
+@keyframes joopeterewb-modal-fade {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.joopeterewb-modal-header {
+    background: #f6f7f7;
+    border-bottom: 1px solid #dcdcde;
+    padding: 16px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.joopeterewb-modal-header h2 {
+    font-size: 18px;
+    font-weight: 700;
+    margin: 0;
+    color: #1d2327;
+}
+
+.joopeterewb-modal-close {
+    font-size: 28px;
+    font-weight: 600;
+    cursor: pointer;
+    color: #646970;
+    transition: color 0.1s ease;
+    line-height: 1;
+}
+
+.joopeterewb-modal-close:hover {
+    color: #1d2327;
+}
+
+.joopeterewb-modal-meta {
+    background-color: #f6f7f7;
+    border-bottom: 1px solid #dcdcde;
+    padding: 12px 24px;
+    font-size: 13px;
+    color: #50575e;
+}
+
+.joopeterewb-modal-meta p {
+    margin: 4px 0;
+}
+
+.joopeterewb-modal-body {
+    padding: 24px;
+    max-height: 400px;
+    overflow-y: auto;
+    font-size: 14px;
+    line-height: 1.6;
+    background-color: #ffffff;
+    color: #2c3338;
+}
+
+/* Styling formatting within the email body inside modal */
+.joopeterewb-modal-body p {
+    margin-top: 0;
+    margin-bottom: 1.2em;
+}
+
+/* Sidebar metabox chips styles */
+.joopeterewb-chips-wrapper {
+    margin-bottom: 12px;
+}
+
+.joopeterewb-chips-wrapper label {
+    font-weight: 600;
+    display: block;
+    margin-bottom: 6px;
+    font-size: 13px;
+    color: #1d2327;
+}
+
+.joopeterewb-status-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.joopeterewb-chip {
+    display: inline-block;
+    padding: 4px 10px;
+    background: #ffffff;
+    border: 1px solid #c3c4c7;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 500;
+    cursor: pointer;
+    user-select: none;
+    color: #2c3338;
+    transition: all 0.15s ease-in-out;
+}
+
+.joopeterewb-chip:hover {
+    background: #f0f0f1;
+    border-color: #8c8f94;
+}
+
+.joopeterewb-chip.active {
+    background: #2271b1;
+    border-color: #2271b1;
+    color: #ffffff;
+}
+
+.joopeterewb-chip.active:hover {
+    background: #135e96;
+    border-color: #135e96;
+}
+
+/* Sidebar metabox footer */
+.joopeterewb-metabox-footer {
+    margin-top: 15px;
+    padding-top: 12px;
+    border-top: 1px solid #dcdcde;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.joopeterewb-metabox-footer a {
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 12px;
+    color: #2271b1;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    transition: color 0.15s ease;
+}
+
+.joopeterewb-metabox-footer a:hover {
+    color: #135e96;
+}
+
+.joopeterewb-metabox-footer a .dashicons {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+}
+
+/* ==========================================================================
+   Tab Navigation & Settings Layout Styles
+   ========================================================================== */
+
+/* Tab Navigation */
+.joopeterewb-nav-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #c3c4c7;
+    padding-bottom: 1px;
+}
+
+.joopeterewb-tab-nav-btn {
+    background: #f6f7f7 !important;
+    border: 1px solid #c3c4c7 !important;
+    border-bottom: none !important;
+    color: #50575e !important;
+    padding: 10px 20px !important;
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    border-top-left-radius: 6px !important;
+    border-top-right-radius: 6px !important;
+    cursor: pointer !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    transition: background-color 0.15s ease, color 0.15s ease !important;
+    height: auto !important;
+    position: relative;
+    top: 1px;
+}
+
+.joopeterewb-tab-nav-btn:hover {
+    background: #ffffff !important;
+    color: #2271b1 !important;
+}
+
+.joopeterewb-tab-nav-btn.active {
+    background: #ffffff !important;
+    border-color: #c3c4c7 !important;
+    border-bottom: 1px solid #ffffff !important;
+    color: #2271b1 !important;
+    z-index: 10;
+}
+
+/* Panel Headers */
+.joopeterewb-panel-header-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.joopeterewb-panel-header-actions h2 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 700;
+    color: #1d2327;
+}
+
+/* Settings Tab Layout */
+.joopeterewb-settings-card {
+    background: #ffffff;
+    border: 1px solid #c3c4c7;
+    border-radius: 8px;
+    padding: 30px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+}
+
+.joopeterewb-settings-card h2 {
+    margin: 0 0 10px;
+    font-size: 20px;
+    font-weight: 700;
+    color: #1d2327;
+}
+
+.joopeterewb-settings-card .description {
+    font-size: 14px;
+    color: #646970;
+    margin-bottom: 30px;
+    max-width: 600px;
+    line-height: 1.5;
+}
+
+/* Roles grid settings */
+.joopeterewb-roles-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+    margin-bottom: 30px;
+}
+
+.joopeterewb-role-checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 16px 20px;
+    background: #f6f7f7;
+    border: 1px solid #dcdcde;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 14px;
+    color: #2c3338;
+    transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.joopeterewb-role-checkbox-label:hover {
+    background: #edf5fa;
+    border-color: #2271b1;
+}
+
+.joopeterewb-role-checkbox-label input[type="checkbox"] {
+    margin: 0;
+    width: 18px;
+    height: 18px;
+}
+
+.joopeterewb-badge-required {
+    font-size: 11px;
+    font-weight: 600;
+    background: #dcdcde;
+    color: #50575e;
+    padding: 2px 8px;
+    border-radius: 10px;
+    margin-left: auto;
+}
+
+/* Settings footer */
+.joopeterewb-settings-footer {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    border-top: 1px solid #dcdcde;
+    padding-top: 24px;
+}
+
+#joopeterewb_save_settings_btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 8px !important;
+    height: auto !important;
+    line-height: 1 !important;
+    padding: 12px 24px !important;
+}
+
+#joopeterewb_save_settings_btn .dashicons {
+    margin: 0 !important;
+    vertical-align: middle !important;
+    line-height: 1 !important;
+}
+
+#joopeterewb-settings-feedback {
+    margin: 20px 0;
+    padding: 5px;
+    display: none;
+}
+
+/* Countdown Cancel Button styling */
+.joopeterewb-countdown-active {
+    background: #e35a5a !important;
+    color: #ffffff !important;
+    border-color: #e35a5a !important;
+    text-shadow: none !important;
+    box-shadow: 0 1px 0 #b33b3b !important;
+}
+
+.joopeterewb-countdown-active:hover,
+.joopeterewb-countdown-active:focus {
+    background: #cf4e4e !important;
+    color: #ffffff !important;
+    border-color: #cf4e4e !important;
+}
+
+/* Meta box Retry Failed Button */
+.joopeterewb-meta-retry-btn {
+    border-color: #cca300 !important;
+    color: #cca300 !important;
+    background: #ffffff !important;
+    transition: background 0.15s ease, color 0.15s ease !important;
+    margin-left: 6px !important;
+}
+
+.joopeterewb-meta-retry-btn:hover {
+    background-color: #cca300 !important;
+    color: #ffffff !important;
+}
