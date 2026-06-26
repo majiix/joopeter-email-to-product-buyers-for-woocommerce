@@ -37,10 +37,10 @@ if ( ! class_exists( 'Joopeterewb_Email_To_Product_Buyers' ) ) {
 			add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_assets' ) );
 
 			// Handle the AJAX request to send email.
-			add_action( 'wp_ajax_JOOPETEREWB_send_product_email', array( $this, 'handle_email_sending' ) );
+			add_action( 'wp_ajax_joopeterewb_send_product_email', array( $this, 'handle_email_sending' ) );
 
 			// Handle AJAX request to refresh count.
-			add_action( 'wp_ajax_JOOPETEREWB_refresh_customer_count', array( $this, 'handle_refresh_count' ) );
+			add_action( 'wp_ajax_joopeterewb_refresh_customer_count', array( $this, 'handle_refresh_count' ) );
 
 			// Clear cache when order status changes to keep counts accurate.
 			add_action( 'woocommerce_order_status_changed', array( $this, 'clear_cache_on_order_change' ), 10, 4 );
@@ -49,16 +49,16 @@ if ( ! class_exists( 'Joopeterewb_Email_To_Product_Buyers' ) ) {
 			add_action( 'admin_menu', array( $this, 'register_tools_page' ) );
 
 			// Handle AJAX request to clear logs.
-			add_action( 'wp_ajax_JOOPETEREWB_clear_email_logs', array( $this, 'handle_clear_logs' ) );
+			add_action( 'wp_ajax_joopeterewb_clear_email_logs', array( $this, 'handle_clear_logs' ) );
 
 			// Handle AJAX request to clear success logs.
-			add_action( 'wp_ajax_JOOPETEREWB_clear_success_logs', array( $this, 'handle_clear_success_logs' ) );
+			add_action( 'wp_ajax_joopeterewb_clear_success_logs', array( $this, 'handle_clear_success_logs' ) );
 
 			// Handle AJAX request to retry failed emails.
-			add_action( 'wp_ajax_JOOPETEREWB_retry_failed_emails', array( $this, 'handle_retry_failed_emails' ) );
+			add_action( 'wp_ajax_joopeterewb_retry_failed_emails', array( $this, 'handle_retry_failed_emails' ) );
 
 			// Handle AJAX request to save settings.
-			add_action( 'wp_ajax_JOOPETEREWB_save_settings', array( $this, 'handle_save_settings' ) );
+			add_action( 'wp_ajax_joopeterewb_save_settings', array( $this, 'handle_save_settings' ) );
 		}
 
 		/**
@@ -121,7 +121,7 @@ if ( ! class_exists( 'Joopeterewb_Email_To_Product_Buyers' ) ) {
 					'joopeterewb_params',
 					array(
 						'ajaxurl' => admin_url( 'admin-ajax.php' ),
-						'nonce'   => wp_create_nonce( 'JOOPETEREWB_email_action' ),
+						'nonce'   => wp_create_nonce( 'joopeterewb_email_action' ),
 						'strings' => array(
 							'confirm_clear'         => __( 'Are you sure you want to clear all email logs?', 'joopeter-email-to-product-buyers-for-woocommerce' ),
 							'confirm_clear_success' => __( 'Are you sure you want to clear all successful email logs?', 'joopeter-email-to-product-buyers-for-woocommerce' ),
@@ -173,7 +173,7 @@ if ( ! class_exists( 'Joopeterewb_Email_To_Product_Buyers' ) ) {
 				array(
 					'ajaxurl'    => admin_url( 'admin-ajax.php' ),
 					'product_id' => $post->ID,
-					'nonce'      => wp_create_nonce( 'JOOPETEREWB_email_action' ),
+					'nonce'      => wp_create_nonce( 'joopeterewb_email_action' ),
 					'strings'    => array(
 						'empty_fields' => __( 'Please fill in both Subject and Message fields.', 'joopeter-email-to-product-buyers-for-woocommerce' ),
 						'confirm_send' => __( 'Are you sure you want to send this email to all buyers?', 'joopeter-email-to-product-buyers-for-woocommerce' ),
@@ -186,7 +186,7 @@ if ( ! class_exists( 'Joopeterewb_Email_To_Product_Buyers' ) ) {
 		public function add_meta_box() {
 			if ( $this->current_user_has_access() ) {
 				add_meta_box(
-					'JOOPETEREWB_email_buyers_box',
+					'joopeterewb_email_buyers_box',
 					__( 'Email Customers Who Bought This Product', 'joopeter-email-to-product-buyers-for-woocommerce' ),
 					array( $this, 'render_meta_box' ),
 					'product',
@@ -235,20 +235,20 @@ if ( ! class_exists( 'Joopeterewb_Email_To_Product_Buyers' ) ) {
 						?>
 						</span>
 					</div>
-					<button type="button" id="JOOPETEREWB_refresh_count_btn" class="button button-small joopeterewb-refresh-btn" title="<?php esc_attr_e( 'Refresh count', 'joopeter-email-to-product-buyers-for-woocommerce' ); ?>">
+					<button type="button" id="joopeterewb_refresh_count_btn" class="button button-small joopeterewb-refresh-btn" title="<?php esc_attr_e( 'Refresh count', 'joopeter-email-to-product-buyers-for-woocommerce' ); ?>">
 						<span class="dashicons dashicons-update"></span>
 					</button>
 				</div>
 
 				<p>
-					<label for="JOOPETEREWB_email_subject">
+					<label for="joopeterewb_email_subject">
 						<?php esc_html_e( 'Subject:', 'joopeter-email-to-product-buyers-for-woocommerce' ); ?>
 					</label>
-					<input type="text" id="JOOPETEREWB_email_subject" name="JOOPETEREWB_email_subject" class="widefat" value="" placeholder="<?php esc_attr_e( 'Enter email subject', 'joopeter-email-to-product-buyers-for-woocommerce' ); ?>">
+					<input type="text" id="joopeterewb_email_subject" name="joopeterewb_email_subject" class="widefat" value="" placeholder="<?php esc_attr_e( 'Enter email subject', 'joopeter-email-to-product-buyers-for-woocommerce' ); ?>">
 				</p>
 
 				<div class="joopeterewb-editor-wrapper">
-					<label for="JOOPETEREWB_email_message">
+					<label for="joopeterewb_email_message">
 						<?php esc_html_e( 'Message:', 'joopeter-email-to-product-buyers-for-woocommerce' ); ?>
 					</label>
 					<?php
@@ -259,19 +259,19 @@ if ( ! class_exists( 'Joopeterewb_Email_To_Product_Buyers' ) ) {
 						'teeny'         => true,
 						'quicktags'     => false,
 					);
-					wp_editor( '', 'JOOPETEREWB_email_message', $editor_settings );
+					wp_editor( '', 'joopeterewb_email_message', $editor_settings );
 					?>
 				</div>
 
 				<div id="joopeterewb-email-feedback"></div>
 
-				<button type="button" id="JOOPETEREWB_send_email_btn" class="button button-primary">
+				<button type="button" id="joopeterewb_send_email_btn" class="button button-primary">
 					<?php esc_html_e( 'Send Email', 'joopeter-email-to-product-buyers-for-woocommerce' ); ?>
 				</button>
-				<button type="button" id="JOOPETEREWB_retry_failed_meta_btn" class="button button-secondary joopeterewb-meta-retry-btn" style="display:none;">
+				<button type="button" id="joopeterewb_retry_failed_meta_btn" class="button button-secondary joopeterewb-meta-retry-btn" style="display:none;">
 					<?php esc_html_e( 'Retry Failed', 'joopeter-email-to-product-buyers-for-woocommerce' ); ?>
 				</button>
-				<span class="spinner" id="JOOPETEREWB_email_spinner"></span>
+				<span class="spinner" id="joopeterewb_email_spinner"></span>
 
 				<div class="joopeterewb-metabox-footer">
 					<a href="<?php echo esc_url( admin_url( 'tools.php?page=joopeterewb-email-panel' ) ); ?>" target="_blank">
@@ -287,7 +287,7 @@ if ( ! class_exists( 'Joopeterewb_Email_To_Product_Buyers' ) ) {
 		 * Handle AJAX request to refresh customer count.
 		 */
 		public function handle_refresh_count() {
-			check_ajax_referer( 'JOOPETEREWB_email_action', 'security' );
+			check_ajax_referer( 'joopeterewb_email_action', 'security' );
 
 			if ( ! $this->current_user_has_access() ) {
 				wp_send_json_error( __( 'Permission denied.', 'joopeter-email-to-product-buyers-for-woocommerce' ) );
@@ -323,7 +323,7 @@ if ( ! class_exists( 'Joopeterewb_Email_To_Product_Buyers' ) ) {
 		 * Handle AJAX request to send emails in chunked batches.
 		 */
 		public function handle_email_sending() {
-			check_ajax_referer( 'JOOPETEREWB_email_action', 'security' );
+			check_ajax_referer( 'joopeterewb_email_action', 'security' );
 
 			if ( ! $this->current_user_has_access() ) {
 				wp_send_json_error( __( 'You do not have permission to perform this action.', 'joopeter-email-to-product-buyers-for-woocommerce' ) );
@@ -660,13 +660,13 @@ if ( ! class_exists( 'Joopeterewb_Email_To_Product_Buyers' ) ) {
 		 * Handle AJAX request to clear logs.
 		 */
 		public function handle_clear_logs() {
-			check_ajax_referer( 'JOOPETEREWB_email_action', 'security' );
+			check_ajax_referer( 'joopeterewb_email_action', 'security' );
 
 			if ( ! current_user_can( 'manage_options' ) ) {
 				wp_send_json_error( __( 'You do not have permission to perform this action.', 'joopeter-email-to-product-buyers-for-woocommerce' ) );
 			}
 
-			update_option( 'JOOPETEREWB_email_logs', array() );
+			update_option( 'joopeterewb_email_logs', array() );
 
 			wp_send_json_success( __( 'All logs have been cleared successfully.', 'joopeter-email-to-product-buyers-for-woocommerce' ) );
 		}
@@ -675,7 +675,7 @@ if ( ! class_exists( 'Joopeterewb_Email_To_Product_Buyers' ) ) {
 		 * Handle AJAX request to clear successful logs.
 		 */
 		public function handle_clear_success_logs() {
-			check_ajax_referer( 'JOOPETEREWB_email_action', 'security' );
+			check_ajax_referer( 'joopeterewb_email_action', 'security' );
 
 			if ( ! current_user_can( 'manage_options' ) ) {
 				wp_send_json_error( __( 'You do not have permission to perform this action.', 'joopeter-email-to-product-buyers-for-woocommerce' ) );
@@ -683,7 +683,7 @@ if ( ! class_exists( 'Joopeterewb_Email_To_Product_Buyers' ) ) {
 
 			$this->prune_expired_logs();
 
-			$logs = get_option( 'JOOPETEREWB_email_logs', array() );
+			$logs = get_option( 'joopeterewb_email_logs', array() );
 			if ( ! is_array( $logs ) ) {
 				$logs = array();
 			}
@@ -695,7 +695,7 @@ if ( ! class_exists( 'Joopeterewb_Email_To_Product_Buyers' ) ) {
 				}
 			}
 
-			update_option( 'JOOPETEREWB_email_logs', $filtered_logs );
+			update_option( 'joopeterewb_email_logs', $filtered_logs );
 
 			wp_send_json_success( __( 'Successful logs have been cleared successfully.', 'joopeter-email-to-product-buyers-for-woocommerce' ) );
 		}
@@ -704,7 +704,7 @@ if ( ! class_exists( 'Joopeterewb_Email_To_Product_Buyers' ) ) {
 		 * Handle AJAX request to retry failed emails.
 		 */
 		public function handle_retry_failed_emails() {
-			check_ajax_referer( 'JOOPETEREWB_email_action', 'security' );
+			check_ajax_referer( 'joopeterewb_email_action', 'security' );
 
 			if ( ! current_user_can( 'manage_options' ) ) {
 				wp_send_json_error( __( 'You do not have permission to perform this action.', 'joopeter-email-to-product-buyers-for-woocommerce' ) );
@@ -712,7 +712,7 @@ if ( ! class_exists( 'Joopeterewb_Email_To_Product_Buyers' ) ) {
 
 			$this->prune_expired_logs();
 
-			$logs = get_option( 'JOOPETEREWB_email_logs', array() );
+			$logs = get_option( 'joopeterewb_email_logs', array() );
 			if ( ! is_array( $logs ) || empty( $logs ) ) {
 				wp_send_json_error( __( 'No logs available to retry.', 'joopeter-email-to-product-buyers-for-woocommerce' ) );
 			}
@@ -751,7 +751,7 @@ if ( ! class_exists( 'Joopeterewb_Email_To_Product_Buyers' ) ) {
 				wp_send_json_error( __( 'No failed emails found to retry.', 'joopeter-email-to-product-buyers-for-woocommerce' ) );
 			}
 
-			update_option( 'JOOPETEREWB_email_logs', $logs );
+			update_option( 'joopeterewb_email_logs', $logs );
 
 			/* translators: 1: Succeeded retries count, 2: Total retries count */
 			$message = sprintf( __( 'Retried %2$d failed emails. %1$d succeeded.', 'joopeter-email-to-product-buyers-for-woocommerce' ), $success_count, $retry_count );
@@ -770,7 +770,7 @@ if ( ! class_exists( 'Joopeterewb_Email_To_Product_Buyers' ) ) {
 		private function add_email_log( $product_id, $recipient, $subject, $message, $status ) {
 			$this->prune_expired_logs();
 
-			$logs = get_option( 'JOOPETEREWB_email_logs', array() );
+			$logs = get_option( 'joopeterewb_email_logs', array() );
 			if ( ! is_array( $logs ) ) {
 				$logs = array();
 			}
@@ -801,19 +801,19 @@ if ( ! class_exists( 'Joopeterewb_Email_To_Product_Buyers' ) ) {
 				$logs = array_slice( $logs, 0, 500 );
 			}
 
-			update_option( 'JOOPETEREWB_email_logs', $logs );
+			update_option( 'joopeterewb_email_logs', $logs );
 		}
 
 		/**
 		 * Prune expired log entries based on settings.
 		 */
 		private function prune_expired_logs() {
-			$expiry_days = (int) get_option( 'JOOPETEREWB_log_expiry_days', 30 );
+			$expiry_days = (int) get_option( 'joopeterewb_log_expiry_days', 30 );
 			if ( 0 === $expiry_days ) {
 				return;
 			}
 
-			$logs = get_option( 'JOOPETEREWB_email_logs', array() );
+			$logs = get_option( 'joopeterewb_email_logs', array() );
 			if ( ! is_array( $logs ) || empty( $logs ) ) {
 				return;
 			}
@@ -834,7 +834,7 @@ if ( ! class_exists( 'Joopeterewb_Email_To_Product_Buyers' ) ) {
 
 			if ( $updated ) {
 				$logs = array_values( $logs ); // Re-index array
-				update_option( 'JOOPETEREWB_email_logs', $logs );
+				update_option( 'joopeterewb_email_logs', $logs );
 			}
 		}
 
@@ -845,7 +845,7 @@ if ( ! class_exists( 'Joopeterewb_Email_To_Product_Buyers' ) ) {
 		public function render_tools_page() {
 			$this->prune_expired_logs();
 
-			$logs = get_option( 'JOOPETEREWB_email_logs', array() );
+			$logs = get_option( 'joopeterewb_email_logs', array() );
 			if ( ! is_array( $logs ) ) {
 				$logs = array();
 			}
@@ -863,7 +863,7 @@ if ( ! class_exists( 'Joopeterewb_Email_To_Product_Buyers' ) ) {
 
 			// Settings variables.
 			$all_roles = wp_roles()->get_names();
-			$allowed_roles = get_option( 'JOOPETEREWB_allowed_roles', array( 'administrator', 'shop_manager' ) );
+			$allowed_roles = get_option( 'joopeterewb_allowed_roles', array( 'administrator', 'shop_manager' ) );
 			if ( ! is_array( $allowed_roles ) ) {
 				$allowed_roles = array( 'administrator', 'shop_manager' );
 			}
@@ -895,13 +895,13 @@ if ( ! class_exists( 'Joopeterewb_Email_To_Product_Buyers' ) ) {
 					<div class="joopeterewb-panel-header-actions">
 						<h2><?php esc_html_e( 'Sent Email Logs History', 'joopeter-email-to-product-buyers-for-woocommerce' ); ?></h2>
 						<div class="joopeterewb-action-buttons">
-							<button type="button" id="JOOPETEREWB_retry_failed_btn" class="button button-primary joopeterewb-retry-btn" <?php echo ( $failed_count === 0 ) ? 'disabled' : ''; ?>>
+							<button type="button" id="joopeterewb_retry_failed_btn" class="button button-primary joopeterewb-retry-btn" <?php echo ( $failed_count === 0 ) ? 'disabled' : ''; ?>>
 								<span class="dashicons dashicons-update"></span> <?php esc_html_e( 'Retry Failed Emails', 'joopeter-email-to-product-buyers-for-woocommerce' ); ?>
 							</button>
-							<button type="button" id="JOOPETEREWB_clear_success_btn" class="button joopeterewb-clear-success-btn" <?php echo ( $success_count === 0 ) ? 'disabled' : ''; ?>>
+							<button type="button" id="joopeterewb_clear_success_btn" class="button joopeterewb-clear-success-btn" <?php echo ( $success_count === 0 ) ? 'disabled' : ''; ?>>
 								<span class="dashicons dashicons-trash"></span> <?php esc_html_e( 'Clear Success Logs', 'joopeter-email-to-product-buyers-for-woocommerce' ); ?>
 							</button>
-							<button type="button" id="JOOPETEREWB_clear_logs_btn" class="button joopeterewb-clear-btn" <?php echo empty( $logs ) ? 'disabled' : ''; ?>>
+							<button type="button" id="joopeterewb_clear_logs_btn" class="button joopeterewb-clear-btn" <?php echo empty( $logs ) ? 'disabled' : ''; ?>>
 								<span class="dashicons dashicons-trash"></span> <?php esc_html_e( 'Clear All Logs', 'joopeter-email-to-product-buyers-for-woocommerce' ); ?>
 							</button>
 						</div>
@@ -942,11 +942,11 @@ if ( ! class_exists( 'Joopeterewb_Email_To_Product_Buyers' ) ) {
 					<div class="joopeterewb-filter-bar">
 						<div class="joopeterewb-search-box-wrapper">
 							<span class="dashicons dashicons-search"></span>
-							<input type="text" id="JOOPETEREWB_log_search" placeholder="<?php esc_attr_e( 'Search by email, sender or subject...', 'joopeter-email-to-product-buyers-for-woocommerce' ); ?>">
+							<input type="text" id="joopeterewb_log_search" placeholder="<?php esc_attr_e( 'Search by email, sender or subject...', 'joopeter-email-to-product-buyers-for-woocommerce' ); ?>">
 						</div>
 						<div class="joopeterewb-filter-status-wrapper">
-							<label for="JOOPETEREWB_log_status_filter"><?php esc_html_e( 'Filter Status:', 'joopeter-email-to-product-buyers-for-woocommerce' ); ?></label>
-							<select id="JOOPETEREWB_log_status_filter">
+							<label for="joopeterewb_log_status_filter"><?php esc_html_e( 'Filter Status:', 'joopeter-email-to-product-buyers-for-woocommerce' ); ?></label>
+							<select id="joopeterewb_log_status_filter">
 								<option value="all"><?php esc_html_e( 'All', 'joopeter-email-to-product-buyers-for-woocommerce' ); ?></option>
 								<option value="success"><?php esc_html_e( 'Success', 'joopeter-email-to-product-buyers-for-woocommerce' ); ?></option>
 								<option value="failed"><?php esc_html_e( 'Failed', 'joopeter-email-to-product-buyers-for-woocommerce' ); ?></option>
@@ -1046,9 +1046,9 @@ if ( ! class_exists( 'Joopeterewb_Email_To_Product_Buyers' ) ) {
 									<?php esc_html_e( 'Configure how many days email logs should be retained before they are automatically deleted.', 'joopeter-email-to-product-buyers-for-woocommerce' ); ?>
 								</p>
 								<div class="joopeterewb-settings-field" style="margin-bottom: 20px;">
-									<label for="JOOPETEREWB_log_expiry_days" style="font-weight:600; display:block; margin-bottom:8px;"><?php esc_html_e( 'Keep Logs For:', 'joopeter-email-to-product-buyers-for-woocommerce' ); ?></label>
-									<?php $expiry_days = (int) get_option( 'JOOPETEREWB_log_expiry_days', 30 ); ?>
-									<select id="JOOPETEREWB_log_expiry_days" name="log_expiry_days" style="min-width: 200px; padding: 6px; border-radius: 4px; border: 1px solid #8c8f94;">
+									<label for="joopeterewb_log_expiry_days" style="font-weight:600; display:block; margin-bottom:8px;"><?php esc_html_e( 'Keep Logs For:', 'joopeter-email-to-product-buyers-for-woocommerce' ); ?></label>
+									<?php $expiry_days = (int) get_option( 'joopeterewb_log_expiry_days', 30 ); ?>
+									<select id="joopeterewb_log_expiry_days" name="log_expiry_days" style="min-width: 200px; padding: 6px; border-radius: 4px; border: 1px solid #8c8f94;">
 										<option value="0" <?php selected( 0 === $expiry_days ); ?>><?php esc_html_e( 'Keep Forever', 'joopeter-email-to-product-buyers-for-woocommerce' ); ?></option>
 										<option value="7" <?php selected( 7 === $expiry_days ); ?>><?php esc_html_e( '7 Days', 'joopeter-email-to-product-buyers-for-woocommerce' ); ?></option>
 										<option value="14" <?php selected( 14 === $expiry_days ); ?>><?php esc_html_e( '14 Days', 'joopeter-email-to-product-buyers-for-woocommerce' ); ?></option>
@@ -1062,10 +1062,10 @@ if ( ! class_exists( 'Joopeterewb_Email_To_Product_Buyers' ) ) {
 							<div id="joopeterewb-settings-feedback"></div>
 
 							<div class="joopeterewb-settings-footer">
-								<button type="submit" id="JOOPETEREWB_save_settings_btn" class="button button-primary button-hero">
+								<button type="submit" id="joopeterewb_save_settings_btn" class="button button-primary button-hero">
 									<span class="dashicons dashicons-saved"></span> <?php esc_html_e( 'Save Settings', 'joopeter-email-to-product-buyers-for-woocommerce' ); ?>
 								</button>
-								<span class="spinner" id="JOOPETEREWB_settings_spinner"></span>
+								<span class="spinner" id="joopeterewb_settings_spinner"></span>
 							</div>
 						</form>
 					</div>
@@ -1101,7 +1101,7 @@ if ( ! class_exists( 'Joopeterewb_Email_To_Product_Buyers' ) ) {
 				return false;
 			}
 
-			$allowed_roles = get_option( 'JOOPETEREWB_allowed_roles', array( 'administrator', 'shop_manager' ) );
+			$allowed_roles = get_option( 'joopeterewb_allowed_roles', array( 'administrator', 'shop_manager' ) );
 			if ( ! is_array( $allowed_roles ) ) {
 				$allowed_roles = array( 'administrator', 'shop_manager' );
 			}
@@ -1122,7 +1122,7 @@ if ( ! class_exists( 'Joopeterewb_Email_To_Product_Buyers' ) ) {
 		 * Handle AJAX request to save settings.
 		 */
 		public function handle_save_settings() {
-			check_ajax_referer( 'JOOPETEREWB_email_action', 'security' );
+			check_ajax_referer( 'joopeterewb_email_action', 'security' );
 
 			if ( ! current_user_can( 'manage_options' ) ) {
 				wp_send_json_error( __( 'You do not have permission to perform this action.', 'joopeter-email-to-product-buyers-for-woocommerce' ) );
@@ -1135,12 +1135,12 @@ if ( ! class_exists( 'Joopeterewb_Email_To_Product_Buyers' ) ) {
 				$roles[] = 'administrator';
 			}
 
-			update_option( 'JOOPETEREWB_allowed_roles', $roles );
+			update_option( 'joopeterewb_allowed_roles', $roles );
 
 			// Handle log expiry setting.
 			if ( isset( $_POST['log_expiry_days'] ) ) {
 				$expiry_days = absint( $_POST['log_expiry_days'] );
-				update_option( 'JOOPETEREWB_log_expiry_days', $expiry_days );
+				update_option( 'joopeterewb_log_expiry_days', $expiry_days );
 			}
 
 			$this->prune_expired_logs();

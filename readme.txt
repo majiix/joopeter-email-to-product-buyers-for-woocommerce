@@ -3,7 +3,7 @@ Contributors: micromax2
 Tags: woocommerce, email, product, customers, marketing
 Requires at least: 5.8
 Tested up to: 7.0
-Stable tag: 1.3.1
+Stable tag: 1.3.2
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -55,6 +55,9 @@ You can customize log retention settings under the Permissions & Settings tab to
 Yes, the plugin features a cancelable 10-second countdown. If you click send and realize there is an issue, you can click the red "Cancel Send" button before the timer hits zero to safely abort the send.
 
 == Changelog ==
+
+= 1.3.2 =
+* Fixed case sensitivity bugs where uppercase-prefixed option names, AJAX actions, and DOM element IDs in the PHP codebase did not match lowercase selectors in JS and CSS, causing plugin actions to fail.
 
 = 1.3.1 =
 * Fixed ReferenceError: joopeterewb_params is not defined in administrative scripts.
