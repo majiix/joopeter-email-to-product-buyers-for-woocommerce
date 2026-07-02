@@ -38,14 +38,38 @@ add_action( 'before_woocommerce_init', function() {
 	}
 } );
 
-// Include the main class.
-if ( file_exists( JOOPETEREWB_PLUGIN_DIR . 'includes/class-joopeter-email-to-product-buyers.php' ) ) {
-	require_once JOOPETEREWB_PLUGIN_DIR . 'includes/class-joopeter-email-to-product-buyers.php';
+// Include and initialize the plugin on plugins_loaded.
+add_action( 'plugins_loaded', 'joopeterewb_init_plugin' );
+function joopeterewb_init_plugin() {
+	if ( ! class_exists( 'WooCommerce' ) ) {
+		add_action( 'admin_notices', 'joopeterewb_admin_notice_missing_wc' );
+		return;
+	}
+
+	// Include the main class.
+	if ( file_exists( JOOPETEREWB_PLUGIN_DIR . 'includes/class-joopeter-email-to-product-buyers.php' ) ) {
+		require_once JOOPETEREWB_PLUGIN_DIR . 'includes/class-joopeter-email-to-product-buyers.php';
+	}
+
+	// Initialize the plugin.
+	if ( class_exists( 'Joopeterewb_Email_To_Product_Buyers' ) ) {
+		new Joopeterewb_Email_To_Product_Buyers();
+	}
 }
 
-// Initialize the plugin.
-if ( class_exists( 'Joopeterewb_Email_To_Product_Buyers' ) ) {
-	new Joopeterewb_Email_To_Product_Buyers();
+/**
+ * Display notice if WooCommerce is missing.
+ */
+function joopeterewb_admin_notice_missing_wc() {
+	?>
+	<div class="notice notice-error is-dismissible">
+		<p>
+			<?php
+			esc_html_e( 'JooPeter Email to Product Buyers requires WooCommerce to be installed and active.', 'joopeter-email-to-product-buyers-for-woocommerce' );
+			?>
+		</p>
+	</div>
+	<?php
 }
 
 // Register activation hook to initialize email logs option.
@@ -55,3 +79,4 @@ function joopeterewb_activate_plugin() {
 		add_option( 'joopeterewb_email_logs', array() );
 	}
 }
+

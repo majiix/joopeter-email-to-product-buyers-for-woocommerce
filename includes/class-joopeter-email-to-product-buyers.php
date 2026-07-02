@@ -140,7 +140,7 @@ if ( ! class_exists( 'Joopeterewb_Email_To_Product_Buyers' ) ) {
 				return;
 			}
 
-			if ( ! $post || 'product' !== $post->post_type ) {
+			if ( ! $post instanceof WP_Post || 'product' !== $post->post_type ) {
 				return;
 			}
 
@@ -203,7 +203,7 @@ if ( ! class_exists( 'Joopeterewb_Email_To_Product_Buyers' ) ) {
 		 */
 		public function render_meta_box( $post ) {
 			// Verify we are on a product page.
-			if ( 'product' !== $post->post_type ) {
+			if ( ! $post instanceof WP_Post || 'product' !== $post->post_type ) {
 				return;
 			}
 
@@ -294,7 +294,13 @@ if ( ! class_exists( 'Joopeterewb_Email_To_Product_Buyers' ) ) {
 			}
 
 			$product_id = isset( $_POST['product_id'] ) ? absint( $_POST['product_id'] ) : 0;
-			$statuses   = isset( $_POST['statuses'] ) ? array_map( 'sanitize_key', (array) $_POST['statuses'] ) : array( 'processing', 'completed', 'on-hold' );
+			$raw_statuses = isset( $_POST['statuses'] ) ? (array) $_POST['statuses'] : array( 'processing', 'completed', 'on-hold' );
+			$statuses     = array();
+			foreach ( $raw_statuses as $status ) {
+				if ( is_scalar( $status ) ) {
+					$statuses[] = sanitize_key( $status );
+				}
+			}
 			if ( empty( $statuses ) ) {
 				$statuses = array( 'processing', 'completed', 'on-hold' );
 			}
@@ -330,9 +336,15 @@ if ( ! class_exists( 'Joopeterewb_Email_To_Product_Buyers' ) ) {
 			}
 
 			$product_id = isset( $_POST['product_id'] ) ? absint( $_POST['product_id'] ) : 0;
-			$subject    = isset( $_POST['subject'] ) ? sanitize_text_field( wp_unslash( $_POST['subject'] ) ) : '';
-			$message    = isset( $_POST['message'] ) ? wp_kses_post( wp_unslash( $_POST['message'] ) ) : '';
-			$statuses   = isset( $_POST['statuses'] ) ? array_map( 'sanitize_key', (array) $_POST['statuses'] ) : array( 'processing', 'completed', 'on-hold' );
+			$subject    = isset( $_POST['subject'] ) && is_scalar( $_POST['subject'] ) ? sanitize_text_field( wp_unslash( $_POST['subject'] ) ) : '';
+			$message    = isset( $_POST['message'] ) && is_scalar( $_POST['message'] ) ? wp_kses_post( wp_unslash( $_POST['message'] ) ) : '';
+			$raw_statuses = isset( $_POST['statuses'] ) ? (array) $_POST['statuses'] : array( 'processing', 'completed', 'on-hold' );
+			$statuses     = array();
+			foreach ( $raw_statuses as $status ) {
+				if ( is_scalar( $status ) ) {
+					$statuses[] = sanitize_key( $status );
+				}
+			}
 			if ( empty( $statuses ) ) {
 				$statuses = array( 'processing', 'completed', 'on-hold' );
 			}
@@ -350,7 +362,13 @@ if ( ! class_exists( 'Joopeterewb_Email_To_Product_Buyers' ) ) {
 			}
 
 			// Fetch emails directly using robust SQL, or use custom passed list.
-			$custom_emails = isset( $_POST['emails'] ) ? array_map( 'sanitize_email', wp_unslash( (array) $_POST['emails'] ) ) : array();
+			$raw_emails = isset( $_POST['emails'] ) ? (array) $_POST['emails'] : array();
+			$custom_emails = array();
+			foreach ( $raw_emails as $email ) {
+				if ( is_scalar( $email ) ) {
+					$custom_emails[] = sanitize_email( wp_unslash( $email ) );
+				}
+			}
 			if ( ! empty( $custom_emails ) ) {
 				$emails = $custom_emails;
 			} else {
@@ -432,6 +450,10 @@ if ( ! class_exists( 'Joopeterewb_Email_To_Product_Buyers' ) ) {
 		 * @param WC_Order $order    Order object.
 		 */
 		public function clear_cache_on_order_change( $order_id, $from, $to, $order ) {
+			if ( ! function_exists( 'wc_get_order' ) ) {
+				return;
+			}
+
 			// We only care if an order enters or leaves processing/completed/on-hold.
 			$relevant_statuses = array( 'processing', 'completed', 'on-hold', 'wc-processing', 'wc-completed', 'wc-on-hold' );
 
@@ -487,6 +509,10 @@ if ( ! class_exists( 'Joopeterewb_Email_To_Product_Buyers' ) ) {
 		 * @return array
 		 */
 		private function get_buyer_emails( $product_id, $statuses = array( 'processing', 'completed', 'on-hold' ) ) {
+			if ( ! class_exists( 'WooCommerce' ) ) {
+				return array();
+			}
+
 			global $wpdb;
 
 			$cache_key = 'JOOPETEREWB_buyer_emails_' . $product_id;
@@ -614,7 +640,7 @@ if ( ! class_exists( 'Joopeterewb_Email_To_Product_Buyers' ) ) {
 				is_array( $hpos_emails ) ? $hpos_emails : array()
 			);
 
-			$final_emails = array_unique( $all_emails );
+			$final_emails = array_filter( array_unique( $all_emails ), 'is_email' );
 
 			// Store in cache
 			$cache_data[ $statuses_hash ] = $final_emails;
@@ -631,6 +657,9 @@ if ( ! class_exists( 'Joopeterewb_Email_To_Product_Buyers' ) ) {
 		 */
 		private function get_product_ids_including_variations( $product_id ) {
 			$product_ids = array( $product_id );
+			if ( ! function_exists( 'wc_get_product' ) ) {
+				return $product_ids;
+			}
 			$product     = wc_get_product( $product_id );
 
 			if ( $product && $product->is_type( 'variable' ) ) {
@@ -818,7 +847,7 @@ if ( ! class_exists( 'Joopeterewb_Email_To_Product_Buyers' ) ) {
 				return;
 			}
 
-			$cutoff_time = current_time( 'timestamp' ) - ( $expiry_days * DAY_IN_SECONDS );
+			$cutoff_time = time() + (int) ( get_option( 'gmt_offset' ) * HOUR_IN_SECONDS ) - ( $expiry_days * DAY_IN_SECONDS );
 			$updated = false;
 
 			foreach ( $logs as $key => $log ) {
@@ -1128,7 +1157,13 @@ if ( ! class_exists( 'Joopeterewb_Email_To_Product_Buyers' ) ) {
 				wp_send_json_error( __( 'You do not have permission to perform this action.', 'joopeter-email-to-product-buyers-for-woocommerce' ) );
 			}
 
-			$roles = isset( $_POST['roles'] ) ? array_map( 'sanitize_key', (array) $_POST['roles'] ) : array( 'administrator' );
+			$raw_roles = isset( $_POST['roles'] ) ? (array) $_POST['roles'] : array( 'administrator' );
+			$roles     = array();
+			foreach ( $raw_roles as $role ) {
+				if ( is_scalar( $role ) ) {
+					$roles[] = sanitize_key( $role );
+				}
+			}
 			
 			// Always enforce administrator.
 			if ( ! in_array( 'administrator', $roles, true ) ) {
@@ -1138,7 +1173,7 @@ if ( ! class_exists( 'Joopeterewb_Email_To_Product_Buyers' ) ) {
 			update_option( 'joopeterewb_allowed_roles', $roles );
 
 			// Handle log expiry setting.
-			if ( isset( $_POST['log_expiry_days'] ) ) {
+			if ( isset( $_POST['log_expiry_days'] ) && is_scalar( $_POST['log_expiry_days'] ) ) {
 				$expiry_days = absint( $_POST['log_expiry_days'] );
 				update_option( 'joopeterewb_log_expiry_days', $expiry_days );
 			}
