@@ -974,42 +974,44 @@ if ( ! class_exists( 'Joopeterewb_Email_To_Product_Buyers' ) ) {
 						</div>
 					</div>
 
-					<div class="joopeterewb-filter-bar">
-						<div class="joopeterewb-search-box-wrapper">
-							<span class="dashicons dashicons-search"></span>
-							<input type="text" id="joopeterewb_log_search" placeholder="<?php esc_attr_e( 'Search by email, sender or subject...', 'joopeter-email-to-product-buyers-for-woocommerce' ); ?>">
+					<?php if ( empty( $logs ) ) : ?>
+						<div class="joopeterewb-empty-state">
+							<svg class="joopeterewb-empty-state-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 19v-8.93a2 2 0 01.89-1.664l8-5.333a2 2 0 012.22 0l8 5.333A2 2 0 0121 10.07V19M3 19a2 2 0 002 2h14a2 2 0 002-2M3 19l6.75-4.5M21 19l-6.75-4.5M3 10l6.75 4.5M21 10l-6.75 4.5m0 0l-2.25-1.5a2 2 0 00-2.22 0l-2.25 1.5M12 14v-4m-2 2h4"></path>
+							</svg>
+							<h3><?php esc_html_e( 'No Dispatches Yet', 'joopeter-email-to-product-buyers-for-woocommerce' ); ?></h3>
+							<p><?php esc_html_e( 'Your email campaign history will appear here once you send your first message to product buyers.', 'joopeter-email-to-product-buyers-for-woocommerce' ); ?></p>
 						</div>
-						<div class="joopeterewb-filter-status-wrapper">
-							<label for="joopeterewb_log_status_filter"><?php esc_html_e( 'Filter Status:', 'joopeter-email-to-product-buyers-for-woocommerce' ); ?></label>
-							<select id="joopeterewb_log_status_filter">
-								<option value="all"><?php esc_html_e( 'All', 'joopeter-email-to-product-buyers-for-woocommerce' ); ?></option>
-								<option value="success"><?php esc_html_e( 'Success', 'joopeter-email-to-product-buyers-for-woocommerce' ); ?></option>
-								<option value="failed"><?php esc_html_e( 'Failed', 'joopeter-email-to-product-buyers-for-woocommerce' ); ?></option>
-							</select>
+					<?php else : ?>
+						<div class="joopeterewb-filter-bar">
+							<div class="joopeterewb-search-box-wrapper">
+								<span class="dashicons dashicons-search"></span>
+								<input type="text" id="joopeterewb_log_search" placeholder="<?php esc_attr_e( 'Search by email, sender or subject...', 'joopeter-email-to-product-buyers-for-woocommerce' ); ?>">
+							</div>
+							<div class="joopeterewb-filter-status-wrapper">
+								<label for="joopeterewb_log_status_filter"><?php esc_html_e( 'Filter Status:', 'joopeter-email-to-product-buyers-for-woocommerce' ); ?></label>
+								<select id="joopeterewb_log_status_filter">
+									<option value="all"><?php esc_html_e( 'All', 'joopeter-email-to-product-buyers-for-woocommerce' ); ?></option>
+									<option value="success"><?php esc_html_e( 'Success', 'joopeter-email-to-product-buyers-for-woocommerce' ); ?></option>
+									<option value="failed"><?php esc_html_e( 'Failed', 'joopeter-email-to-product-buyers-for-woocommerce' ); ?></option>
+								</select>
+							</div>
 						</div>
-					</div>
 
-					<div class="joopeterewb-table-container">
-						<table class="wp-list-table widefat fixed striped table-view-list joopeterewb-logs-table">
-							<thead>
-								<tr>
-									<th scope="col" class="manage-column column-date"><?php esc_html_e( 'Date & Time', 'joopeter-email-to-product-buyers-for-woocommerce' ); ?></th>
-									<th scope="col" class="manage-column column-sender"><?php esc_html_e( 'Sent By', 'joopeter-email-to-product-buyers-for-woocommerce' ); ?></th>
-									<th scope="col" class="manage-column column-recipient"><?php esc_html_e( 'Recipient', 'joopeter-email-to-product-buyers-for-woocommerce' ); ?></th>
-									<th scope="col" class="manage-column column-product"><?php esc_html_e( 'Product', 'joopeter-email-to-product-buyers-for-woocommerce' ); ?></th>
-									<th scope="col" class="manage-column column-subject"><?php esc_html_e( 'Subject', 'joopeter-email-to-product-buyers-for-woocommerce' ); ?></th>
-									<th scope="col" class="manage-column column-status"><?php esc_html_e( 'Status', 'joopeter-email-to-product-buyers-for-woocommerce' ); ?></th>
-									<th scope="col" class="manage-column column-actions"><?php esc_html_e( 'Action', 'joopeter-email-to-product-buyers-for-woocommerce' ); ?></th>
-								</tr>
-							</thead>
-							<tbody id="joopeterewb-logs-tbody">
-								<?php if ( empty( $logs ) ) : ?>
-									<tr class="no-items">
-										<td colspan="7" class="colspanchange">
-											<?php esc_html_e( 'No email logs found.', 'joopeter-email-to-product-buyers-for-woocommerce' ); ?>
-										</td>
+						<div class="joopeterewb-table-container">
+							<table class="wp-list-table widefat fixed striped table-view-list joopeterewb-logs-table">
+								<thead>
+									<tr>
+										<th scope="col" class="manage-column column-date"><?php esc_html_e( 'Date & Time', 'joopeter-email-to-product-buyers-for-woocommerce' ); ?></th>
+										<th scope="col" class="manage-column column-sender"><?php esc_html_e( 'Sent By', 'joopeter-email-to-product-buyers-for-woocommerce' ); ?></th>
+										<th scope="col" class="manage-column column-recipient"><?php esc_html_e( 'Recipient', 'joopeter-email-to-product-buyers-for-woocommerce' ); ?></th>
+										<th scope="col" class="manage-column column-product"><?php esc_html_e( 'Product', 'joopeter-email-to-product-buyers-for-woocommerce' ); ?></th>
+										<th scope="col" class="manage-column column-subject"><?php esc_html_e( 'Subject', 'joopeter-email-to-product-buyers-for-woocommerce' ); ?></th>
+										<th scope="col" class="manage-column column-status"><?php esc_html_e( 'Status', 'joopeter-email-to-product-buyers-for-woocommerce' ); ?></th>
+										<th scope="col" class="manage-column column-actions"><?php esc_html_e( 'Action', 'joopeter-email-to-product-buyers-for-woocommerce' ); ?></th>
 									</tr>
-								<?php else : ?>
+								</thead>
+								<tbody id="joopeterewb-logs-tbody">
 									<?php foreach ( $logs as $index => $log ) : ?>
 										<tr class="joopeterewb-log-row" data-status="<?php echo esc_attr( $log['status'] ); ?>" data-search="<?php echo esc_attr( strtolower( $log['recipient'] . ' ' . $log['subject'] . ' ' . ( isset( $log['sender'] ) ? $log['sender'] : 'system' ) . ' ' . $log['product_name'] ) ); ?>">
 											<td class="column-date">
@@ -1044,10 +1046,10 @@ if ( ! class_exists( 'Joopeterewb_Email_To_Product_Buyers' ) ) {
 											</td>
 										</tr>
 									<?php endforeach; ?>
-								<?php endif; ?>
-							</tbody>
-						</table>
-					</div>
+								</tbody>
+							</table>
+						</div>
+					<?php endif; ?>
 				</div>
 
 				<!-- Tab 2: Settings Panel -->

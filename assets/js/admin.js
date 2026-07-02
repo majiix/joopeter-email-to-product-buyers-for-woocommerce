@@ -1,4 +1,4 @@
-﻿jQuery(document).ready(function($) {
+jQuery(document).ready(function($) {
     'use strict';
 
     var countdownTimer = null;
@@ -14,6 +14,62 @@
             e.preventDefault();
             e.returnValue = message;
             return message;
+        }
+    });
+
+    /* ==========================================================================
+       Interactive Counter Animations (Delight)
+       ========================================================================== */
+    function animateStatsCounts() {
+        $('.joopeterewb-stat-info h3').each(function() {
+            var $this = $(this);
+            var countTo = parseInt($this.text(), 10);
+            if (isNaN(countTo) || countTo === 0) {
+                return;
+            }
+            $({ countNum: 0 }).animate({
+                countNum: countTo
+            }, {
+                duration: 1000,
+                easing: 'swing',
+                step: function() {
+                    $this.text(Math.floor(this.countNum));
+                },
+                complete: function() {
+                    $this.text(this.countNum);
+                }
+            });
+        });
+    }
+    animateStatsCounts();
+
+    /* ==========================================================================
+       Role Permissions Card Styling
+       ========================================================================== */
+    // Initialize active role card states
+    $('.joopeterewb-role-checkbox-label').each(function() {
+        var $label = $(this);
+        if ($label.find('input[type="checkbox"]').is(':checked')) {
+            $label.addClass('active-card');
+        }
+    });
+
+    // Handle role checkbox active card changes
+    $('.joopeterewb-role-checkbox-label input[type="checkbox"]').on('change', function() {
+        var $label = $(this).closest('.joopeterewb-role-checkbox-label');
+        if (this.checked) {
+            $label.addClass('active-card');
+        } else {
+            $label.removeClass('active-card');
+        }
+    });
+
+    /* ==========================================================================
+       Keyboard Accessibility (Escape to close modal)
+       ========================================================================== */
+    $(document).on('keydown', function(e) {
+        if (e.key === 'Escape' || e.keyCode === 27) {
+            $('#joopeterewb-preview-modal').hide();
         }
     });
 
@@ -58,7 +114,7 @@
             $('#joopeterewb_refresh_count_btn').prop('disabled', false);
             
             var $feedback = $('#joopeterewb-email-feedback');
-            $feedback.show().removeClass('notice-warning notice-success notice-error').addClass('notice notice-info').html('<p>Sending canceled.</p>');
+            $feedback.show().removeClass('notice-warning notice-success notice-error').addClass('notice notice-info').html('<p>Dispatch paused. No emails were sent.</p>');
             return;
         }
 
@@ -116,7 +172,21 @@
         $('.joopeterewb-chip').css('pointer-events', 'none');
         $('#joopeterewb_refresh_count_btn').prop('disabled', true);
         
-        $feedback.show().removeClass('notice-error notice-success notice-info').addClass('notice notice-warning').html('<p>Email will be sent in <strong id="joopeterewb-countdown-seconds">10</strong> seconds. Click "Cancel Send" to stop.</p>');
+        // Render counting info and linear progress bar
+        $feedback.show().removeClass('notice-error notice-success notice-info').addClass('notice notice-warning').html(
+            '<p>Preparing dispatch... Launching in <strong id="joopeterewb-countdown-seconds">10</strong> seconds. Click "Cancel Send" to abort.</p>' +
+            '<div class="joopeterewb-progress-bar-container" style="display: block;">' +
+            '  <div class="joopeterewb-progress-bar" style="width: 100%;"></div>' +
+            '</div>'
+        );
+
+        // Fire smooth CSS transition down to 0% width over the 10 seconds
+        setTimeout(function() {
+            $feedback.find('.joopeterewb-progress-bar').css({
+                'transition': 'width 10s linear',
+                'width': '0%'
+            });
+        }, 50);
 
         countdownTimer = setInterval(function() {
             countdown--;
@@ -195,10 +265,18 @@
                                     batchSendingActive = false;
                                     isRetryActive = false;
 
-                                    // Display final summary
+                                    // Display final summary with checkmark draw success celebration (Option C)
                                     $feedback.removeClass('notice-info notice-error').addClass('notice notice-success').html(
-                                        '<p><strong>' + response.data.message + '</strong><br>' +
-                                        'Success: ' + totalSuccessCount + ' | Failed: ' + totalFailedCount + '</p>'
+                                        '<div style="text-align: center; padding: 12px 0;">' +
+                                        '  <svg class="joopeterewb-checkmark-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">' +
+                                        '    <circle class="joopeterewb-checkmark-circle" cx="26" cy="26" r="25" fill="none"/>' +
+                                        '    <path class="joopeterewb-checkmark-check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>' +
+                                        '  </svg>' +
+                                        '  <strong style="font-size: 14px; display: block; margin-top: 10px; color: var(--joopeterewb-text);">' + response.data.message + '</strong>' +
+                                        '  <p style="margin: 6px 0 0; font-size: 12px; color: var(--joopeterewb-text-secondary);">' +
+                                        '    Success: ' + totalSuccessCount + ' | Failed: ' + totalFailedCount +
+                                        '  </p>' +
+                                        '</div>'
                                     );
 
                                     // Toggle retry button if there are failures
@@ -488,7 +566,7 @@
         });
     });
 
-    // Dashboard tabs toggling
+    // Dashboard tabs toggling (with smooth slide/fade interactions)
     $('.joopeterewb-tab-nav-btn').on('click', function(e) {
         e.preventDefault();
         var $btn = $(this);
@@ -498,9 +576,9 @@
         $('.joopeterewb-tab-nav-btn').removeClass('active');
         $btn.addClass('active');
 
-        // Toggle panels
+        // Hide all panels instantly to avoid clashing callbacks, then fade in the target panel
         $('.joopeterewb-tab-panel').hide();
-        $('#joopeterewb-tab-' + targetTab).show();
+        $('#joopeterewb-tab-' + targetTab).stop().fadeIn(200);
     });
 
     // Save settings form AJAX action
