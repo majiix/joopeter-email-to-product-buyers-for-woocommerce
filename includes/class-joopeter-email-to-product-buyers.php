@@ -294,11 +294,13 @@ if ( ! class_exists( 'Joopeterewb_Email_To_Product_Buyers' ) ) {
 			}
 
 			$product_id = isset( $_POST['product_id'] ) ? absint( $_POST['product_id'] ) : 0;
-			$raw_statuses = isset( $_POST['statuses'] ) ? (array) $_POST['statuses'] : array( 'processing', 'completed', 'on-hold' );
-			$statuses     = array();
-			foreach ( $raw_statuses as $status ) {
-				if ( is_scalar( $status ) ) {
-					$statuses[] = sanitize_key( $status );
+			$statuses = array( 'processing', 'completed', 'on-hold' );
+			if ( isset( $_POST['statuses'] ) ) {
+				$posted_statuses = map_deep( wp_unslash( $_POST['statuses'] ), 'sanitize_key' );
+				if ( is_array( $posted_statuses ) ) {
+					$statuses = array_map( 'sanitize_key', array_filter( $posted_statuses, 'is_scalar' ) );
+				} elseif ( is_scalar( $posted_statuses ) ) {
+					$statuses = array( sanitize_key( $posted_statuses ) );
 				}
 			}
 			if ( empty( $statuses ) ) {
@@ -338,11 +340,13 @@ if ( ! class_exists( 'Joopeterewb_Email_To_Product_Buyers' ) ) {
 			$product_id = isset( $_POST['product_id'] ) ? absint( $_POST['product_id'] ) : 0;
 			$subject    = isset( $_POST['subject'] ) && is_scalar( $_POST['subject'] ) ? sanitize_text_field( wp_unslash( $_POST['subject'] ) ) : '';
 			$message    = isset( $_POST['message'] ) && is_scalar( $_POST['message'] ) ? wp_kses_post( wp_unslash( $_POST['message'] ) ) : '';
-			$raw_statuses = isset( $_POST['statuses'] ) ? (array) $_POST['statuses'] : array( 'processing', 'completed', 'on-hold' );
-			$statuses     = array();
-			foreach ( $raw_statuses as $status ) {
-				if ( is_scalar( $status ) ) {
-					$statuses[] = sanitize_key( $status );
+			$statuses = array( 'processing', 'completed', 'on-hold' );
+			if ( isset( $_POST['statuses'] ) ) {
+				$posted_statuses = map_deep( wp_unslash( $_POST['statuses'] ), 'sanitize_key' );
+				if ( is_array( $posted_statuses ) ) {
+					$statuses = array_map( 'sanitize_key', array_filter( $posted_statuses, 'is_scalar' ) );
+				} elseif ( is_scalar( $posted_statuses ) ) {
+					$statuses = array( sanitize_key( $posted_statuses ) );
 				}
 			}
 			if ( empty( $statuses ) ) {
@@ -362,11 +366,13 @@ if ( ! class_exists( 'Joopeterewb_Email_To_Product_Buyers' ) ) {
 			}
 
 			// Fetch emails directly using robust SQL, or use custom passed list.
-			$raw_emails = isset( $_POST['emails'] ) ? (array) $_POST['emails'] : array();
 			$custom_emails = array();
-			foreach ( $raw_emails as $email ) {
-				if ( is_scalar( $email ) ) {
-					$custom_emails[] = sanitize_email( wp_unslash( $email ) );
+			if ( isset( $_POST['emails'] ) ) {
+				$posted_emails = map_deep( wp_unslash( $_POST['emails'] ), 'sanitize_email' );
+				if ( is_array( $posted_emails ) ) {
+					$custom_emails = array_map( 'sanitize_email', array_filter( $posted_emails, 'is_scalar' ) );
+				} elseif ( is_scalar( $posted_emails ) ) {
+					$custom_emails = array( sanitize_email( $posted_emails ) );
 				}
 			}
 			if ( ! empty( $custom_emails ) ) {
@@ -1157,11 +1163,13 @@ if ( ! class_exists( 'Joopeterewb_Email_To_Product_Buyers' ) ) {
 				wp_send_json_error( __( 'You do not have permission to perform this action.', 'joopeter-email-to-product-buyers-for-woocommerce' ) );
 			}
 
-			$raw_roles = isset( $_POST['roles'] ) ? (array) $_POST['roles'] : array( 'administrator' );
-			$roles     = array();
-			foreach ( $raw_roles as $role ) {
-				if ( is_scalar( $role ) ) {
-					$roles[] = sanitize_key( $role );
+			$roles = array( 'administrator' );
+			if ( isset( $_POST['roles'] ) ) {
+				$posted_roles = map_deep( wp_unslash( $_POST['roles'] ), 'sanitize_key' );
+				if ( is_array( $posted_roles ) ) {
+					$roles = array_map( 'sanitize_key', array_filter( $posted_roles, 'is_scalar' ) );
+				} elseif ( is_scalar( $posted_roles ) ) {
+					$roles = array( sanitize_key( $posted_roles ) );
 				}
 			}
 			

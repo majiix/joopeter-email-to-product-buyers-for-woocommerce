@@ -3,7 +3,7 @@ Contributors: micromax2
 Tags: woocommerce, email, product, customers, marketing
 Requires at least: 5.8
 Tested up to: 7.0
-Stable tag: 1.3.2
+Stable tag: 1.3.4
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -55,6 +55,18 @@ You can customize log retention settings under the Permissions & Settings tab to
 Yes, the plugin features a cancelable 10-second countdown. If you click send and realize there is an issue, you can click the red "Cancel Send" button before the timer hits zero to safely abort the send.
 
 == Changelog ==
+
+= 1.3.4 =
+* Hardened user input sanitization in $_POST AJAX handlers (statuses, emails, and roles) using map_deep with sanitize_key and sanitize_email to satisfy WordPress coding standards and prevent security warnings.
+
+= 1.3.3 =
+* Refactored bootstrap process to hook plugin loading to plugins_loaded.
+* Added checks for WooCommerce class existence to prevent errors if WooCommerce is deactivated.
+* Hardened PHP 8+ compatibility in all AJAX handlers by ensuring elements in $_POST array are scalar before passing to WordPress sanitization functions.
+* Enhanced $post checks using instanceof WP_Post.
+* Added checks for wc_get_order and wc_get_product to prevent fatal errors when WooCommerce functions are unavailable.
+* Integrated is_email filter into database email retrieval to remove malformed or empty database values.
+* Replaced deprecated current_time( 'timestamp' ) call in log pruning.
 
 = 1.3.2 =
 * Fixed case sensitivity bugs where uppercase-prefixed option names, AJAX actions, and DOM element IDs in the PHP codebase did not match lowercase selectors in JS and CSS, causing plugin actions to fail.
