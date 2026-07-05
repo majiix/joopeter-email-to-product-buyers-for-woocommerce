@@ -45,6 +45,9 @@ if ( ! class_exists( 'Joopeterewb_Email_To_Product_Buyers' ) ) {
 			// Clear cache when order status changes to keep counts accurate.
 			add_action( 'woocommerce_order_status_changed', array( $this, 'clear_cache_on_order_change' ), 10, 4 );
 
+			// Clear cache when order is updated to keep counts accurate.
+			add_action( 'woocommerce_update_order', array( $this, 'clear_cache_on_order_update' ), 10, 2 );
+
 			// Register the Tools submenu page.
 			add_action( 'admin_menu', array( $this, 'register_tools_page' ) );
 
@@ -447,8 +450,54 @@ if ( ! class_exists( 'Joopeterewb_Email_To_Product_Buyers' ) ) {
 			) );
 		}
 
+		private function clear_product_cache_for_order( $order ) {
+			if ( ! $order instanceof \WC_Order ) {
+				return;
+			}
+			foreach ( $order->get_items() as $item ) {
+				$product_id   = $item->get_product_id();
+				$variation_id = $item->get_variation_id();
+
+				if ( $product_id ) {
+					wp_cache_delete( 'JOOPETEREWB_buyer_emails_' . $product_id, self::CACHE_GROUP );
+				}
+
+				if ( $variation_id ) {
+					wp_cache_delete( 'JOOPETEREWB_buyer_emails_' . $variation_id, self::CACHE_GROUP );
+				}
+			}
+		}
+
 		/**
 		 * Clear cache when an order is updated.
+		 *
+		 * @param int      $order_id Order ID.
+		 * @param WC_Order $order    Order object.
+		 */
+		public function clear_cache_on_order_update( $order_id, $order = null ) {
+			if ( ! function_exists( 'wc_get_order' ) ) {
+				return;
+			}
+
+			if ( ! $order ) {
+				$order = wc_get_order( $order_id );
+			}
+
+			if ( ! $order ) {
+				return;
+			}
+
+			// We only care if the order is processing, completed, or on-hold.
+			$relevant_statuses = array( 'processing', 'completed', 'on-hold', 'wc-processing', 'wc-completed', 'wc-on-hold' );
+			if ( ! in_array( $order->get_status(), $relevant_statuses, true ) ) {
+				return;
+			}
+
+			$this->clear_product_cache_for_order( $order );
+		}
+
+		/**
+		 * Clear cache when an order status changes.
 		 *
 		 * @param int      $order_id Order ID.
 		 * @param string   $from     Old status.
@@ -475,21 +524,7 @@ if ( ! class_exists( 'Joopeterewb_Email_To_Product_Buyers' ) ) {
 				return;
 			}
 
-			// Loop through order items to clear cache for specific products.
-			foreach ( $order->get_items() as $item ) {
-				$product_id = $item->get_product_id();
-				$variation_id = $item->get_variation_id();
-
-				// Clear cache for main product ID.
-				if ( $product_id ) {
-					wp_cache_delete( 'JOOPETEREWB_buyer_emails_' . $product_id, self::CACHE_GROUP );
-				}
-
-				// If variation, also clear cache (though we usually query by parent).
-				if ( $variation_id ) {
-					wp_cache_delete( 'JOOPETEREWB_buyer_emails_' . $variation_id, self::CACHE_GROUP );
-				}
-			}
+			$this->clear_product_cache_for_order( $order );
 		}
 
 		/**
@@ -556,7 +591,7 @@ if ( ! class_exists( 'Joopeterewb_Email_To_Product_Buyers' ) ) {
 			$order_ids = $wpdb->get_col( $wpdb->prepare( "
 				SELECT DISTINCT order_items.order_id
 				FROM {$wpdb->prefix}woocommerce_order_items as order_items
-				LEFT JOIN {$wpdb->prefix}woocommerce_order_itemmeta as order_item_meta ON order_items.order_item_id = order_item_meta.order_item_id
+				INNER JOIN {$wpdb->prefix}woocommerce_order_itemmeta as order_item_meta ON order_items.order_item_id = order_item_meta.order_item_id
 				WHERE order_items.order_item_type = 'line_item'
 				AND order_item_meta.meta_key IN ( '_product_id', '_variation_id' )
 				AND order_item_meta.meta_value IN ($ids_placeholder)
@@ -701,7 +736,7 @@ if ( ! class_exists( 'Joopeterewb_Email_To_Product_Buyers' ) ) {
 				wp_send_json_error( __( 'You do not have permission to perform this action.', 'joopeter-email-to-product-buyers-for-woocommerce' ) );
 			}
 
-			update_option( 'joopeterewb_email_logs', array() );
+			update_option( 'joopeterewb_email_logs', array(), 'no' );
 
 			wp_send_json_success( __( 'All logs have been cleared successfully.', 'joopeter-email-to-product-buyers-for-woocommerce' ) );
 		}
@@ -730,7 +765,7 @@ if ( ! class_exists( 'Joopeterewb_Email_To_Product_Buyers' ) ) {
 				}
 			}
 
-			update_option( 'joopeterewb_email_logs', $filtered_logs );
+			update_option( 'joopeterewb_email_logs', $filtered_logs, 'no' );
 
 			wp_send_json_success( __( 'Successful logs have been cleared successfully.', 'joopeter-email-to-product-buyers-for-woocommerce' ) );
 		}
@@ -786,7 +821,7 @@ if ( ! class_exists( 'Joopeterewb_Email_To_Product_Buyers' ) ) {
 				wp_send_json_error( __( 'No failed emails found to retry.', 'joopeter-email-to-product-buyers-for-woocommerce' ) );
 			}
 
-			update_option( 'joopeterewb_email_logs', $logs );
+			update_option( 'joopeterewb_email_logs', $logs, 'no' );
 
 			/* translators: 1: Succeeded retries count, 2: Total retries count */
 			$message = sprintf( __( 'Retried %2$d failed emails. %1$d succeeded.', 'joopeter-email-to-product-buyers-for-woocommerce' ), $success_count, $retry_count );
@@ -836,7 +871,7 @@ if ( ! class_exists( 'Joopeterewb_Email_To_Product_Buyers' ) ) {
 				$logs = array_slice( $logs, 0, 500 );
 			}
 
-			update_option( 'joopeterewb_email_logs', $logs );
+			update_option( 'joopeterewb_email_logs', $logs, 'no' );
 		}
 
 		/**
@@ -869,7 +904,7 @@ if ( ! class_exists( 'Joopeterewb_Email_To_Product_Buyers' ) ) {
 
 			if ( $updated ) {
 				$logs = array_values( $logs ); // Re-index array
-				update_option( 'joopeterewb_email_logs', $logs );
+				update_option( 'joopeterewb_email_logs', $logs, 'no' );
 			}
 		}
 

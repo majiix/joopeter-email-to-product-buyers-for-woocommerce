@@ -3,7 +3,7 @@ Contributors: micromax2
 Tags: woocommerce, email, product, customers, marketing
 Requires at least: 5.8
 Tested up to: 7.0
-Stable tag: 1.3.4
+Stable tag: 1.3.5
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -55,6 +55,12 @@ You can customize log retention settings under the Permissions & Settings tab to
 Yes, the plugin features a cancelable 10-second countdown. If you click send and realize there is an issue, you can click the red "Cancel Send" button before the timer hits zero to safely abort the send.
 
 == Changelog ==
+
+= 1.3.5 =
+* Optimized database queries by changing LEFT JOIN to INNER JOIN for meta lookup.
+* Prevented autoloading of heavy email logs by setting autoload status to 'no' in the options database table.
+* Added woocommerce_update_order hook for robust cache invalidation when order details change.
+* Refactored cache invalidation to use a single helper method.
 
 = 1.3.4 =
 * Hardened user input sanitization in $_POST AJAX handlers (statuses, emails, and roles) using map_deep with sanitize_key and sanitize_email to satisfy WordPress coding standards and prevent security warnings.
