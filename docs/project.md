@@ -5,8 +5,8 @@ JooPeter Email to Product Buyers for WooCommerce is a WordPress plugin that adds
 
 ## Tech Stack
 - **PHP**: 7.4+
-- **WordPress**: 6.0+
-- **WooCommerce**: 6.0+ (supports HPOS / Custom Order Tables)
+- **WordPress**: 6.0+ (Tested up to 7.1)
+- **WooCommerce**: 6.0+ (Tested up to 11.0, supports HPOS / Custom Order Tables)
 - **JavaScript**: jQuery (standard WordPress bundle)
 - **CSS**: Vanilla CSS
 
