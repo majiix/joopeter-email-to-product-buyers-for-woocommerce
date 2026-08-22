@@ -3,11 +3,12 @@
  * Plugin Name: JooPeter Email to Product Buyers for WooCommerce
  * Plugin URI:  https://wordpress.org/plugins/joopeter-email-to-product-buyers-for-woocommerce/
  * Description: Adds a meta box to the product edit page to send custom emails to customers who bought that product.
- * Version:     1.3.6
+ * Version:     1.3.7
  * Author:      micromax
  * Text Domain: joopeter-email-to-product-buyers-for-woocommerce
  * Domain Path: /languages
- * License:     GPL-2.0+
+ * License:     GPL-2.0-or-later
+ * License URI: https://www.gnu.org/licenses/gpl-2.0.html
  * Requires Plugins: woocommerce
  */
 
@@ -18,7 +19,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 // Define plugin constants with unique prefixes (at least 4 chars).
 if ( ! defined( 'JOOPETEREWB_VERSION' ) ) {
-	define( 'JOOPETEREWB_VERSION', '1.3.6' );
+	define( 'JOOPETEREWB_VERSION', '1.3.7' );
 }
 
 if ( ! defined( 'JOOPETEREWB_PLUGIN_DIR' ) ) {
@@ -78,5 +79,24 @@ function joopeterewb_activate_plugin() {
 	if ( false === get_option( 'joopeterewb_email_logs' ) ) {
 		add_option( 'joopeterewb_email_logs', array(), '', 'no' );
 	}
+}
+
+/**
+ * Add settings action link to the plugins page.
+ *
+ * @param array $links Array of plugin action links.
+ * @return array Modified array of action links.
+ */
+add_filter( 'plugin_action_links_' . plugin_basename( __FILE__ ), 'joopeterewb_add_action_links' );
+function joopeterewb_add_action_links( $links ) {
+	if ( current_user_can( 'manage_options' ) ) {
+		$settings_link = sprintf(
+			'<a href="%s">%s</a>',
+			esc_url( admin_url( 'tools.php?page=joopeterewb-email-panel' ) ),
+			esc_html__( 'Settings', 'joopeter-email-to-product-buyers-for-woocommerce' )
+		);
+		array_unshift( $links, $settings_link );
+	}
+	return $links;
 }
 

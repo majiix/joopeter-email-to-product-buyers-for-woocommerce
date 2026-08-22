@@ -27,41 +27,44 @@ if ( ! class_exists( 'Joopeterewb_Email_To_Product_Buyers' ) ) {
 		 * Constructor.
 		 */
 		public function __construct() {
-			// Initialize the plugin on admin init.
-			add_action( 'admin_init', array( $this, 'init' ) );
-
-			// Add the meta box.
-			add_action( 'add_meta_boxes', array( $this, 'add_meta_box' ) );
-
-			// Enqueue scripts and styles.
-			add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_assets' ) );
-
-			// Handle the AJAX request to send email.
-			add_action( 'wp_ajax_joopeterewb_send_product_email', array( $this, 'handle_email_sending' ) );
-
-			// Handle AJAX request to refresh count.
-			add_action( 'wp_ajax_joopeterewb_refresh_customer_count', array( $this, 'handle_refresh_count' ) );
-
 			// Clear cache when order status changes to keep counts accurate.
 			add_action( 'woocommerce_order_status_changed', array( $this, 'clear_cache_on_order_change' ), 10, 4 );
 
 			// Clear cache when order is updated to keep counts accurate.
 			add_action( 'woocommerce_update_order', array( $this, 'clear_cache_on_order_update' ), 10, 2 );
 
-			// Register the Tools submenu page.
-			add_action( 'admin_menu', array( $this, 'register_tools_page' ) );
+			// Admin and AJAX hooks.
+			if ( is_admin() ) {
+				// Initialize the plugin on admin init.
+				add_action( 'admin_init', array( $this, 'init' ) );
 
-			// Handle AJAX request to clear logs.
-			add_action( 'wp_ajax_joopeterewb_clear_email_logs', array( $this, 'handle_clear_logs' ) );
+				// Add the meta box.
+				add_action( 'add_meta_boxes', array( $this, 'add_meta_box' ) );
 
-			// Handle AJAX request to clear success logs.
-			add_action( 'wp_ajax_joopeterewb_clear_success_logs', array( $this, 'handle_clear_success_logs' ) );
+				// Enqueue scripts and styles.
+				add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_assets' ) );
 
-			// Handle AJAX request to retry failed emails.
-			add_action( 'wp_ajax_joopeterewb_retry_failed_emails', array( $this, 'handle_retry_failed_emails' ) );
+				// Register the Tools submenu page.
+				add_action( 'admin_menu', array( $this, 'register_tools_page' ) );
 
-			// Handle AJAX request to save settings.
-			add_action( 'wp_ajax_joopeterewb_save_settings', array( $this, 'handle_save_settings' ) );
+				// Handle the AJAX request to send email.
+				add_action( 'wp_ajax_joopeterewb_send_product_email', array( $this, 'handle_email_sending' ) );
+
+				// Handle AJAX request to refresh count.
+				add_action( 'wp_ajax_joopeterewb_refresh_customer_count', array( $this, 'handle_refresh_count' ) );
+
+				// Handle AJAX request to clear logs.
+				add_action( 'wp_ajax_joopeterewb_clear_email_logs', array( $this, 'handle_clear_logs' ) );
+
+				// Handle AJAX request to clear success logs.
+				add_action( 'wp_ajax_joopeterewb_clear_success_logs', array( $this, 'handle_clear_success_logs' ) );
+
+				// Handle AJAX request to retry failed emails.
+				add_action( 'wp_ajax_joopeterewb_retry_failed_emails', array( $this, 'handle_retry_failed_emails' ) );
+
+				// Handle AJAX request to save settings.
+				add_action( 'wp_ajax_joopeterewb_save_settings', array( $this, 'handle_save_settings' ) );
+			}
 		}
 
 		/**
@@ -81,7 +84,6 @@ if ( ! class_exists( 'Joopeterewb_Email_To_Product_Buyers' ) ) {
 			<div class="notice notice-error">
 				<p>
 					<?php
-					/* translators: %s: Plugin Name */
 					esc_html_e( 'JooPeter Email to Product Buyers requires WooCommerce to be installed and active.', 'joopeter-email-to-product-buyers-for-woocommerce' );
 					?>
 				</p>
@@ -233,7 +235,6 @@ if ( ! class_exists( 'Joopeterewb_Email_To_Product_Buyers' ) ) {
 						<strong id="joopeterewb-count-value"><?php echo esc_html( $buyer_count ); ?></strong>
 						<span id="joopeterewb-count-label">
 						<?php
-						/* translators: %s: Number of customers */
 						echo esc_html( _n( 'customer found', 'customers found', $buyer_count, 'joopeter-email-to-product-buyers-for-woocommerce' ) );
 						?>
 						</span>
@@ -297,6 +298,10 @@ if ( ! class_exists( 'Joopeterewb_Email_To_Product_Buyers' ) ) {
 			}
 
 			$product_id = isset( $_POST['product_id'] ) ? absint( $_POST['product_id'] ) : 0;
+			if ( ! $product_id || ! current_user_can( 'edit_post', $product_id ) ) {
+				wp_send_json_error( __( 'Invalid product ID or insufficient permissions.', 'joopeter-email-to-product-buyers-for-woocommerce' ) );
+			}
+
 			$statuses = array( 'processing', 'completed', 'on-hold' );
 			if ( isset( $_POST['statuses'] ) ) {
 				$posted_statuses = map_deep( wp_unslash( $_POST['statuses'] ), 'sanitize_key' );
@@ -310,10 +315,6 @@ if ( ! class_exists( 'Joopeterewb_Email_To_Product_Buyers' ) ) {
 				$statuses = array( 'processing', 'completed', 'on-hold' );
 			}
 
-			if ( ! $product_id ) {
-				wp_send_json_error( __( 'Invalid product ID.', 'joopeter-email-to-product-buyers-for-woocommerce' ) );
-			}
-
 			// Force clear cache for this product.
 			wp_cache_delete( 'JOOPETEREWB_buyer_emails_' . $product_id, self::CACHE_GROUP );
 
@@ -321,7 +322,6 @@ if ( ! class_exists( 'Joopeterewb_Email_To_Product_Buyers' ) ) {
 			$emails = $this->get_buyer_emails( $product_id, $statuses );
 			$count  = count( $emails );
 
-			/* translators: %s: Number of customers */
 			$label = _n( 'customer found', 'customers found', $count, 'joopeter-email-to-product-buyers-for-woocommerce' );
 
 			wp_send_json_success( array(
@@ -341,6 +341,10 @@ if ( ! class_exists( 'Joopeterewb_Email_To_Product_Buyers' ) ) {
 			}
 
 			$product_id = isset( $_POST['product_id'] ) ? absint( $_POST['product_id'] ) : 0;
+			if ( ! $product_id || ! current_user_can( 'edit_post', $product_id ) ) {
+				wp_send_json_error( __( 'Invalid product ID or insufficient permissions.', 'joopeter-email-to-product-buyers-for-woocommerce' ) );
+			}
+
 			$subject    = isset( $_POST['subject'] ) && is_scalar( $_POST['subject'] ) ? sanitize_text_field( wp_unslash( $_POST['subject'] ) ) : '';
 			$message    = isset( $_POST['message'] ) && is_scalar( $_POST['message'] ) ? wp_kses_post( wp_unslash( $_POST['message'] ) ) : '';
 			$statuses = array( 'processing', 'completed', 'on-hold' );
@@ -364,7 +368,7 @@ if ( ! class_exists( 'Joopeterewb_Email_To_Product_Buyers' ) ) {
 			// Convert newlines to HTML line breaks/paragraphs for email.
 			$message = wpautop( $message );
 
-			if ( ! $product_id || empty( $subject ) || empty( $message ) ) {
+			if ( empty( $subject ) || empty( $message ) ) {
 				wp_send_json_error( __( 'Missing required fields.', 'joopeter-email-to-product-buyers-for-woocommerce' ) );
 			}
 
@@ -414,18 +418,52 @@ if ( ! class_exists( 'Joopeterewb_Email_To_Product_Buyers' ) ) {
 			$emails_sent = 0;
 			$emails_failed = 0;
 			$failed_recipients = array();
+			$new_logs = array();
 
-			// Send the emails.
+			$product_title = get_the_title( $product_id );
+			if ( ! $product_title ) {
+				/* translators: %d: Product ID */
+				$product_title = sprintf( __( 'Product #%d', 'joopeter-email-to-product-buyers-for-woocommerce' ), $product_id );
+			}
+
+			$current_user = wp_get_current_user();
+			$sender = $current_user->exists() ? $current_user->display_name : __( 'System', 'joopeter-email-to-product-buyers-for-woocommerce' );
+			$now = current_time( 'mysql' );
+
+			// Send the emails in this batch.
 			foreach ( $batch_emails as $recipient ) {
 				$sent = wp_mail( $recipient, $subject, $message, $headers );
 				if ( $sent ) {
 					$emails_sent++;
-					$this->add_email_log( $product_id, $recipient, $subject, $message, 'success' );
+					$new_logs[] = array(
+						'timestamp'    => $now,
+						'product_id'   => $product_id,
+						'product_name' => $product_title,
+						'recipient'    => $recipient,
+						'subject'      => $subject,
+						'message'      => $message,
+						'status'       => 'success',
+						'sender'       => $sender,
+					);
 				} else {
 					$emails_failed++;
 					$failed_recipients[] = $recipient;
-					$this->add_email_log( $product_id, $recipient, $subject, $message, 'failed' );
+					$new_logs[] = array(
+						'timestamp'    => $now,
+						'product_id'   => $product_id,
+						'product_name' => $product_title,
+						'recipient'    => $recipient,
+						'subject'      => $subject,
+						'message'      => $message,
+						'status'       => 'failed',
+						'sender'       => $sender,
+					);
 				}
+			}
+
+			// Batch persist logs in a single DB write.
+			if ( ! empty( $new_logs ) ) {
+				$this->add_email_logs_batch( $new_logs );
 			}
 
 			$next_offset = $offset + count( $batch_emails );
@@ -454,17 +492,23 @@ if ( ! class_exists( 'Joopeterewb_Email_To_Product_Buyers' ) ) {
 			if ( ! $order instanceof \WC_Order ) {
 				return;
 			}
+			$product_ids = array();
 			foreach ( $order->get_items() as $item ) {
 				$product_id   = $item->get_product_id();
 				$variation_id = $item->get_variation_id();
 
 				if ( $product_id ) {
-					wp_cache_delete( 'JOOPETEREWB_buyer_emails_' . $product_id, self::CACHE_GROUP );
+					$product_ids[] = $product_id;
 				}
 
 				if ( $variation_id ) {
-					wp_cache_delete( 'JOOPETEREWB_buyer_emails_' . $variation_id, self::CACHE_GROUP );
+					$product_ids[] = $variation_id;
 				}
+			}
+
+			$unique_ids = array_unique( $product_ids );
+			foreach ( $unique_ids as $id ) {
+				wp_cache_delete( 'JOOPETEREWB_buyer_emails_' . $id, self::CACHE_GROUP );
 			}
 		}
 
@@ -541,9 +585,9 @@ if ( ! class_exists( 'Joopeterewb_Email_To_Product_Buyers' ) ) {
 		}
 
 		/**
-		 * Helper to get unique buyer emails using Direct SQL.
-		 * Bypasses WC abstract functions to ensure we check the correct tables.
-		 * Includes caching to satisfy linter and improve performance.
+		 * Helper to get unique buyer emails using optimized direct SQL.
+		 * Uses indexed single-pass JOIN query to eliminate intermediate PHP array allocations.
+		 * Includes object caching to satisfy linter and maximize performance.
 		 *
 		 * @param int   $product_id
 		 * @param array $statuses
@@ -580,40 +624,6 @@ if ( ! class_exists( 'Joopeterewb_Email_To_Product_Buyers' ) ) {
 				return array();
 			}
 
-			// 2. Step 1: Find candidate Order IDs from items.
-			// Construct dynamic placeholders for the IN clause.
-			$ids_placeholder = implode( ',', array_fill( 0, count( $product_ids ), '%s' ) );
-
-			// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
-			// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-			// phpcs:disable PluginCheck.Security.DirectDB.UnescapedDBParameter
-			// phpcs:disable WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
-			$order_ids = $wpdb->get_col( $wpdb->prepare( "
-				SELECT DISTINCT order_items.order_id
-				FROM {$wpdb->prefix}woocommerce_order_items as order_items
-				INNER JOIN {$wpdb->prefix}woocommerce_order_itemmeta as order_item_meta ON order_items.order_item_id = order_item_meta.order_item_id
-				WHERE order_items.order_item_type = 'line_item'
-				AND order_item_meta.meta_key IN ( '_product_id', '_variation_id' )
-				AND order_item_meta.meta_value IN ($ids_placeholder)
-			", $product_ids ) );
-			// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery
-			// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-			// phpcs:enable PluginCheck.Security.DirectDB.UnescapedDBParameter
-			// phpcs:enable WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
-
-			if ( empty( $order_ids ) ) {
-				$cache_data[ $statuses_hash ] = array();
-				wp_cache_set( $cache_key, $cache_data, self::CACHE_GROUP, 300 );
-				return array();
-			}
-
-			// Clean IDs and Prepare Placeholders for Order IDs
-			$order_ids = array_map( 'absint', $order_ids );
-			// Create string of %d placeholders for the IN clause
-			$order_ids_placeholder = implode( ',', array_fill( 0, count( $order_ids ), '%d' ) );
-
-			// 3. Step 2: Check Status AND Fetch Email.
-			
 			// Map statuses to both clean and wc- prefixed for backwards compatibility.
 			$all_possible_statuses = array();
 			foreach ( $statuses as $status ) {
@@ -621,67 +631,61 @@ if ( ! class_exists( 'Joopeterewb_Email_To_Product_Buyers' ) ) {
 				$all_possible_statuses[] = $clean;
 				$all_possible_statuses[] = 'wc-' . $clean;
 			}
-			$all_possible_statuses = array_unique( $all_possible_statuses );
+			$all_possible_statuses = array_values( array_unique( $all_possible_statuses ) );
+
+			// Dynamic placeholders for product IDs and statuses
+			$ids_placeholder = implode( ',', array_fill( 0, count( $product_ids ), '%d' ) );
 			$status_placeholders = implode( ',', array_fill( 0, count( $all_possible_statuses ), '%s' ) );
+			$query_args = array_merge( $product_ids, $all_possible_statuses );
 
-			// Legacy Query (wp_posts + wp_postmeta)
-			$legacy_args = array_merge( $order_ids, $all_possible_statuses );
+			$hpos_enabled = class_exists( '\Automattic\WooCommerce\Utilities\OrderUtil' ) && \Automattic\WooCommerce\Utilities\OrderUtil::custom_orders_table_usage_is_enabled();
+			$all_emails = array();
 
-			// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
-			// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-			// phpcs:disable PluginCheck.Security.DirectDB.UnescapedDBParameter
-			// phpcs:disable WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
-			$legacy_emails = $wpdb->get_col( $wpdb->prepare( "
-				SELECT DISTINCT pm.meta_value
-				FROM {$wpdb->postmeta} pm
-				INNER JOIN {$wpdb->posts} p ON pm.post_id = p.ID
-				WHERE pm.post_id IN ($order_ids_placeholder)
-				AND pm.meta_key = '_billing_email'
-				AND pm.meta_value != ''
-				AND p.post_type = 'shop_order'
-				AND p.post_status IN ($status_placeholders)
-			", $legacy_args ) );
-			// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery
-			// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-			// phpcs:enable PluginCheck.Security.DirectDB.UnescapedDBParameter
-			// phpcs:enable WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
-
-			// HPOS Query (wp_wc_orders) - Only if table exists.
-			$hpos_table = $wpdb->prefix . 'wc_orders';
-			$hpos_emails = array();
-
-			// Use prepare for the table check
-			// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
-			$hpos_exists = $wpdb->get_var( $wpdb->prepare( "SHOW TABLES LIKE %s", $hpos_table ) ) === $hpos_table;
-			// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery
-
-			if ( $hpos_exists ) {
-				$hpos_args = array_merge( $order_ids, $all_possible_statuses );
-
-				// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
-				// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				// phpcs:disable PluginCheck.Security.DirectDB.UnescapedDBParameter
-				// phpcs:disable WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
+			if ( $hpos_enabled ) {
+				$hpos_table = $wpdb->prefix . 'wc_orders';
+				// Single-pass direct JOIN query for HPOS
+				// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
 				$hpos_emails = $wpdb->get_col( $wpdb->prepare( "
-					SELECT DISTINCT billing_email
-					FROM {$hpos_table}
-					WHERE id IN ($order_ids_placeholder)
-					AND billing_email != ''
-					AND status IN ($status_placeholders)
-				", $hpos_args ) );
-				// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery
-				// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				// phpcs:enable PluginCheck.Security.DirectDB.UnescapedDBParameter
-				// phpcs:enable WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
+					SELECT DISTINCT o.billing_email
+					FROM {$hpos_table} o
+					INNER JOIN {$wpdb->prefix}woocommerce_order_items oi ON o.id = oi.order_id
+					INNER JOIN {$wpdb->prefix}woocommerce_order_itemmeta oim ON oi.order_item_id = oim.order_item_id
+					WHERE oi.order_item_type = 'line_item'
+					AND oim.meta_key IN ( '_product_id', '_variation_id' )
+					AND oim.meta_value IN ($ids_placeholder)
+					AND o.status IN ($status_placeholders)
+					AND o.billing_email != ''
+				", $query_args ) );
+				// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
+
+				if ( is_array( $hpos_emails ) ) {
+					$all_emails = $hpos_emails;
+				}
+			} else {
+				// Single-pass direct JOIN query for Legacy Postmeta
+				// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
+				$legacy_emails = $wpdb->get_col( $wpdb->prepare( "
+					SELECT DISTINCT pm.meta_value
+					FROM {$wpdb->postmeta} pm
+					INNER JOIN {$wpdb->posts} p ON pm.post_id = p.ID
+					INNER JOIN {$wpdb->prefix}woocommerce_order_items oi ON p.ID = oi.order_id
+					INNER JOIN {$wpdb->prefix}woocommerce_order_itemmeta oim ON oi.order_item_id = oim.order_item_id
+					WHERE oi.order_item_type = 'line_item'
+					AND oim.meta_key IN ( '_product_id', '_variation_id' )
+					AND oim.meta_value IN ($ids_placeholder)
+					AND pm.meta_key = '_billing_email'
+					AND pm.meta_value != ''
+					AND p.post_type = 'shop_order'
+					AND p.post_status IN ($status_placeholders)
+				", $query_args ) );
+				// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
+
+				if ( is_array( $legacy_emails ) ) {
+					$all_emails = $legacy_emails;
+				}
 			}
 
-			// Merge and Unique
-			$all_emails = array_merge(
-				is_array( $legacy_emails ) ? $legacy_emails : array(),
-				is_array( $hpos_emails ) ? $hpos_emails : array()
-			);
-
-			$final_emails = array_filter( array_unique( $all_emails ), 'is_email' );
+			$final_emails = array_values( array_filter( array_unique( $all_emails ), 'is_email' ) );
 
 			// Store in cache
 			$cache_data[ $statuses_hash ] = $final_emails;
@@ -796,6 +800,9 @@ if ( ! class_exists( 'Joopeterewb_Email_To_Product_Buyers' ) ) {
 
 			$retry_count = 0;
 			$success_count = 0;
+			$current_user = wp_get_current_user();
+			$sender = $current_user->exists() ? $current_user->display_name : __( 'System', 'joopeter-email-to-product-buyers-for-woocommerce' );
+			$now = current_time( 'mysql' );
 
 			foreach ( $logs as $key => $log ) {
 				if ( isset( $log['status'] ) && 'failed' === $log['status'] ) {
@@ -808,11 +815,8 @@ if ( ! class_exists( 'Joopeterewb_Email_To_Product_Buyers' ) ) {
 					if ( $sent ) {
 						$success_count++;
 						$logs[ $key ]['status']    = 'success';
-						$logs[ $key ]['timestamp'] = current_time( 'mysql' );
-						
-						// Update/set the sender to current logged in admin who clicked retry.
-						$current_user = wp_get_current_user();
-						$logs[ $key ]['sender'] = $current_user->exists() ? $current_user->display_name : __( 'System', 'joopeter-email-to-product-buyers-for-woocommerce' );
+						$logs[ $key ]['timestamp'] = $now;
+						$logs[ $key ]['sender']    = $sender;
 					}
 				}
 			}
@@ -829,7 +833,35 @@ if ( ! class_exists( 'Joopeterewb_Email_To_Product_Buyers' ) ) {
 		}
 
 		/**
-		 * Helper to log sent emails.
+		 * Helper to batch log sent emails in a single database write.
+		 *
+		 * @param array $new_logs Array of log entries.
+		 */
+		private function add_email_logs_batch( array $new_logs ) {
+			if ( empty( $new_logs ) ) {
+				return;
+			}
+
+			$this->prune_expired_logs();
+
+			$logs = get_option( 'joopeterewb_email_logs', array() );
+			if ( ! is_array( $logs ) ) {
+				$logs = array();
+			}
+
+			// Prepend new logs to the beginning of the array.
+			$logs = array_merge( $new_logs, $logs );
+
+			// Limit to 500 entries.
+			if ( count( $logs ) > 500 ) {
+				$logs = array_slice( $logs, 0, 500 );
+			}
+
+			update_option( 'joopeterewb_email_logs', $logs, 'no' );
+		}
+
+		/**
+		 * Helper to log a single sent email.
 		 *
 		 * @param int    $product_id The product ID.
 		 * @param string $recipient  The recipient email address.
@@ -838,13 +870,6 @@ if ( ! class_exists( 'Joopeterewb_Email_To_Product_Buyers' ) ) {
 		 * @param string $status     The status ('success' or 'failed').
 		 */
 		private function add_email_log( $product_id, $recipient, $subject, $message, $status ) {
-			$this->prune_expired_logs();
-
-			$logs = get_option( 'joopeterewb_email_logs', array() );
-			if ( ! is_array( $logs ) ) {
-				$logs = array();
-			}
-
 			$product_title = get_the_title( $product_id );
 			if ( ! $product_title ) {
 				/* translators: %d: Product ID */
@@ -854,24 +879,18 @@ if ( ! class_exists( 'Joopeterewb_Email_To_Product_Buyers' ) ) {
 			$current_user = wp_get_current_user();
 			$sender = $current_user->exists() ? $current_user->display_name : __( 'System', 'joopeter-email-to-product-buyers-for-woocommerce' );
 
-			// Add new entry at the beginning.
-			array_unshift( $logs, array(
-				'timestamp'    => current_time( 'mysql' ),
-				'product_id'   => $product_id,
-				'product_name' => $product_title,
-				'recipient'    => $recipient,
-				'subject'      => $subject,
-				'message'      => $message,
-				'status'       => $status,
-				'sender'       => $sender,
+			$this->add_email_logs_batch( array(
+				array(
+					'timestamp'    => current_time( 'mysql' ),
+					'product_id'   => $product_id,
+					'product_name' => $product_title,
+					'recipient'    => $recipient,
+					'subject'      => $subject,
+					'message'      => $message,
+					'status'       => $status,
+					'sender'       => $sender,
+				),
 			) );
-
-			// Limit to 500 entries.
-			if ( count( $logs ) > 500 ) {
-				$logs = array_slice( $logs, 0, 500 );
-			}
-
-			update_option( 'joopeterewb_email_logs', $logs, 'no' );
 		}
 
 		/**
@@ -1048,7 +1067,11 @@ if ( ! class_exists( 'Joopeterewb_Email_To_Product_Buyers' ) ) {
 								</thead>
 								<tbody id="joopeterewb-logs-tbody">
 									<?php foreach ( $logs as $index => $log ) : ?>
-										<tr class="joopeterewb-log-row" data-status="<?php echo esc_attr( $log['status'] ); ?>" data-search="<?php echo esc_attr( strtolower( $log['recipient'] . ' ' . $log['subject'] . ' ' . ( isset( $log['sender'] ) ? $log['sender'] : 'system' ) . ' ' . $log['product_name'] ) ); ?>">
+										<?php
+										$search_data = $log['recipient'] . ' ' . $log['subject'] . ' ' . ( isset( $log['sender'] ) ? $log['sender'] : 'system' ) . ' ' . $log['product_name'];
+										$search_data = function_exists( 'mb_strtolower' ) ? mb_strtolower( $search_data, 'UTF-8' ) : strtolower( $search_data );
+										?>
+										<tr class="joopeterewb-log-row" data-status="<?php echo esc_attr( $log['status'] ); ?>" data-search="<?php echo esc_attr( $search_data ); ?>">
 											<td class="column-date">
 												<?php echo esc_html( $log['timestamp'] ); ?>
 											</td>

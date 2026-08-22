@@ -1,0 +1,14 @@
+includes:
+    - vendor/szepeviktor/phpstan-wordpress/extension.neon
+
+parameters:
+    level: 6
+    paths:
+        - %currentWorkingDirectory%/joopeter-email-to-product-buyers-for-woocommerce.php
+        - %currentWorkingDirectory%/includes
+        - %currentWorkingDirectory%/uninstall.php
+    excludePaths:
+        - %currentWorkingDirectory%/vendor
+        - %currentWorkingDirectory%/*/vendor/*
+    bootstrapFiles:
+        - vendor/php-stubs/woocommerce-stubs/woocommerce-stubs.php

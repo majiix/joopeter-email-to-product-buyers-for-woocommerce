@@ -3,10 +3,10 @@ Contributors: micromax2
 Tags: woocommerce, email, product, customers, marketing
 Requires at least: 5.8
 Tested up to: 7.1
-Stable tag: 1.3.6
+Stable tag: 1.3.7
 Requires PHP: 7.4
-License: GPLv2 or later
-License URI: http://www.gnu.org/licenses/gpl-2.0.html
+License: GPL-2.0-or-later
+License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
 Send custom emails to customers who bought a WooCommerce product, with logs tracking, user role permissions, and an email delivery control center.
 
@@ -55,6 +55,19 @@ You can customize log retention settings under the Permissions & Settings tab to
 Yes, the plugin features a cancelable 10-second countdown. If you click send and realize there is an issue, you can click the red "Cancel Send" button before the timer hits zero to safely abort the send.
 
 == Changelog ==
+
+= 1.3.7 =
+* Added explicit current_user_can( 'edit_post', $product_id ) capability verification to email dispatch and customer count AJAX handlers.
+* Added "Settings" action link on plugins.php page.
+* Eliminated N+1 database option writes by batching email log entries in-memory during dispatch.
+* Converted two-stage buyer queries into a high-performance, single-pass indexed JOIN query for both HPOS and legacy stores.
+* Scoped admin hook registrations to is_admin() to reduce frontend hook registry memory overhead.
+* Deduplicated product and variation cache invalidations during order updates.
+* Modernized WooCommerce HPOS table detection with OrderUtil::custom_orders_table_usage_is_enabled().
+* Hardened log table search strings with mb_strtolower for full UTF-8 multibyte character support.
+* Unified PHPCS disable and ignore annotations to single-line comma-separated format.
+* Added missing License URI header to main plugin file.
+* Added phpstan.neon configuration and dev composer.json for automated static analysis.
 
 = 1.3.6 =
 * Verified and declared full compatibility with WordPress 7.1.
