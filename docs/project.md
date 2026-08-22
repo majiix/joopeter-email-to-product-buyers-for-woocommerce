@@ -25,16 +25,17 @@ JooPeter Email to Product Buyers for WooCommerce is a WordPress plugin that adds
 - **Multibyte UTF-8 Search**: Log search supporting internationalized scripts via `mb_strtolower`.
 - **Retry Mechanism**: Re-send failed emails directly from the logs.
 - **Log Retention Config**: Set logs to auto-expire after a certain number of days (7, 14, 30, 90, 180, or keep forever).
-- **Access Controls & Security**:
-  - Role-based permissions configuration.
+- **Access Controls & Advanced Security**:
+  - Role-based permissions configuration with full Multisite Super Admin support (`is_super_admin()`).
   - Per-product authorization check (`current_user_can('edit_post', $product_id)`) on AJAX actions.
   - Nonces and user capability validation on all endpoints.
+  - Hardened mail header generation against CRLF injection.
 - **Admin Action Links**: Direct "Settings" shortcut link on `plugins.php` for quick navigation to the control center.
 - **High-Performance Caching & Optimized DB Architecture**:
   - Single-pass direct indexed `JOIN` query for buyer retrieval (eliminating multi-stage PHP array allocations).
   - Single-write batch persistence for email logs (`add_email_logs_batch`), eliminating N+1 database option writes.
   - Scoped admin hook registrations behind `is_admin()` to keep frontend page views lean.
-  - Cache deduplication in order updates (`clear_product_cache_for_order`).
+  - Comprehensive variation parent cache invalidation in order updates (`clear_product_cache_for_order`).
   - Direct integration with WooCommerce `OrderUtil::custom_orders_table_usage_is_enabled()`.
   - Non-autoloading logs (`joopeterewb_email_logs` has autoload = 'no') for site speed.
   - Object caching for customer email queries (`wp_cache_get` / `wp_cache_set`).

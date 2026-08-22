@@ -58,11 +58,12 @@ Yes, the plugin features a cancelable 10-second countdown. If you click send and
 
 = 1.3.7 =
 * Added explicit current_user_can( 'edit_post', $product_id ) capability verification to email dispatch and customer count AJAX handlers.
+* Added full WordPress Multisite Network Super Administrator access compatibility via is_super_admin().
 * Added "Settings" action link on plugins.php page.
 * Eliminated N+1 database option writes by batching email log entries in-memory during dispatch.
 * Converted two-stage buyer queries into a high-performance, single-pass indexed JOIN query for both HPOS and legacy stores.
 * Scoped admin hook registrations to is_admin() to reduce frontend hook registry memory overhead.
-* Deduplicated product and variation cache invalidations during order updates.
+* Enhanced order cache invalidation to include parent product IDs for variation order items.
 * Modernized WooCommerce HPOS table detection with OrderUtil::custom_orders_table_usage_is_enabled().
 * Hardened log table search strings with mb_strtolower for full UTF-8 multibyte character support.
 * Unified PHPCS disable and ignore annotations to single-line comma-separated format.

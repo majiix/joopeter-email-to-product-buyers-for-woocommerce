@@ -73,14 +73,6 @@ function joopeterewb_admin_notice_missing_wc() {
 	<?php
 }
 
-// Register activation hook to initialize email logs option.
-register_activation_hook( __FILE__, 'joopeterewb_activate_plugin' );
-function joopeterewb_activate_plugin() {
-	if ( false === get_option( 'joopeterewb_email_logs' ) ) {
-		add_option( 'joopeterewb_email_logs', array(), '', 'no' );
-	}
-}
-
 /**
  * Add settings action link to the plugins page.
  *

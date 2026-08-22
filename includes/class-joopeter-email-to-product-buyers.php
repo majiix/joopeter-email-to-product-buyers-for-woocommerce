@@ -35,9 +35,6 @@ if ( ! class_exists( 'Joopeterewb_Email_To_Product_Buyers' ) ) {
 
 			// Admin and AJAX hooks.
 			if ( is_admin() ) {
-				// Initialize the plugin on admin init.
-				add_action( 'admin_init', array( $this, 'init' ) );
-
 				// Add the meta box.
 				add_action( 'add_meta_boxes', array( $this, 'add_meta_box' ) );
 
@@ -65,30 +62,6 @@ if ( ! class_exists( 'Joopeterewb_Email_To_Product_Buyers' ) ) {
 				// Handle AJAX request to save settings.
 				add_action( 'wp_ajax_joopeterewb_save_settings', array( $this, 'handle_save_settings' ) );
 			}
-		}
-
-		/**
-		 * Check for dependencies.
-		 */
-		public function init() {
-			if ( ! class_exists( 'WooCommerce' ) ) {
-				add_action( 'admin_notices', array( $this, 'admin_notice_missing_wc' ) );
-			}
-		}
-
-		/**
-		 * Display notice if WooCommerce is missing.
-		 */
-		public function admin_notice_missing_wc() {
-			?>
-			<div class="notice notice-error">
-				<p>
-					<?php
-					esc_html_e( 'JooPeter Email to Product Buyers requires WooCommerce to be installed and active.', 'joopeter-email-to-product-buyers-for-woocommerce' );
-					?>
-				</p>
-			</div>
-			<?php
 		}
 
 		/**
@@ -213,7 +186,7 @@ if ( ! class_exists( 'Joopeterewb_Email_To_Product_Buyers' ) ) {
 			}
 
 			// Get the number of unique buyers.
-			$buyer_count = $this->get_buyer_count( $post->ID );
+			$buyer_count = count( $this->get_buyer_emails( $post->ID ) );
 			?>
 			<div class="joopeterewb-email-box-container">
 				<p class="description">
@@ -408,11 +381,11 @@ if ( ! class_exists( 'Joopeterewb_Email_To_Product_Buyers' ) ) {
 			}
 
 			// Add basic header info.
-			$site_title = wp_strip_all_tags( get_bloginfo( 'name' ) );
+			$site_title = sanitize_text_field( wp_strip_all_tags( get_bloginfo( 'name' ) ) );
 			$headers    = array( 'Content-Type: text/html; charset=UTF-8' );
 			/* translators: %s: Site title */
 			$from_name  = sprintf( __( '%s Shop', 'joopeter-email-to-product-buyers-for-woocommerce' ), $site_title );
-			$admin_email = get_option( 'admin_email' );
+			$admin_email = sanitize_email( get_option( 'admin_email' ) );
 			$headers[]  = 'From: ' . $from_name . ' <' . $admin_email . '>';
 
 			$emails_sent = 0;
@@ -503,6 +476,10 @@ if ( ! class_exists( 'Joopeterewb_Email_To_Product_Buyers' ) ) {
 
 				if ( $variation_id ) {
 					$product_ids[] = $variation_id;
+					$parent_id = wp_get_post_parent_id( $variation_id );
+					if ( $parent_id ) {
+						$product_ids[] = $parent_id;
+					}
 				}
 			}
 
@@ -571,18 +548,6 @@ if ( ! class_exists( 'Joopeterewb_Email_To_Product_Buyers' ) ) {
 			$this->clear_product_cache_for_order( $order );
 		}
 
-		/**
-		 * Helper to get count of unique buyers for a product.
-		 *
-		 * @param int   $product_id
-		 * @param array $statuses
-		 * @return int
-		 */
-		private function get_buyer_count( $product_id, $statuses = array( 'processing', 'completed', 'on-hold' ) ) {
-			// We can now just count the array from the main function, which is cached.
-			$emails = $this->get_buyer_emails( $product_id, $statuses );
-			return count( $emails );
-		}
 
 		/**
 		 * Helper to get unique buyer emails using optimized direct SQL.
@@ -758,16 +723,9 @@ if ( ! class_exists( 'Joopeterewb_Email_To_Product_Buyers' ) ) {
 			$this->prune_expired_logs();
 
 			$logs = get_option( 'joopeterewb_email_logs', array() );
-			if ( ! is_array( $logs ) ) {
-				$logs = array();
-			}
-
-			$filtered_logs = array();
-			foreach ( $logs as $log ) {
-				if ( ! isset( $log['status'] ) || 'success' !== $log['status'] ) {
-					$filtered_logs[] = $log;
-				}
-			}
+			$filtered_logs = is_array( $logs ) ? array_values( array_filter( $logs, function( $log ) {
+				return ! isset( $log['status'] ) || 'success' !== $log['status'];
+			} ) ) : array();
 
 			update_option( 'joopeterewb_email_logs', $filtered_logs, 'no' );
 
@@ -791,11 +749,11 @@ if ( ! class_exists( 'Joopeterewb_Email_To_Product_Buyers' ) ) {
 				wp_send_json_error( __( 'No logs available to retry.', 'joopeter-email-to-product-buyers-for-woocommerce' ) );
 			}
 
-			$site_title = wp_strip_all_tags( get_bloginfo( 'name' ) );
+			$site_title = sanitize_text_field( wp_strip_all_tags( get_bloginfo( 'name' ) ) );
 			$headers    = array( 'Content-Type: text/html; charset=UTF-8' );
 			/* translators: %s: Site title */
 			$from_name  = sprintf( __( '%s Shop', 'joopeter-email-to-product-buyers-for-woocommerce' ), $site_title );
-			$admin_email = get_option( 'admin_email' );
+			$admin_email = sanitize_email( get_option( 'admin_email' ) );
 			$headers[]  = 'From: ' . $from_name . ' <' . $admin_email . '>';
 
 			$retry_count = 0;
@@ -861,39 +819,6 @@ if ( ! class_exists( 'Joopeterewb_Email_To_Product_Buyers' ) ) {
 		}
 
 		/**
-		 * Helper to log a single sent email.
-		 *
-		 * @param int    $product_id The product ID.
-		 * @param string $recipient  The recipient email address.
-		 * @param string $subject    The email subject.
-		 * @param string $message    The email body.
-		 * @param string $status     The status ('success' or 'failed').
-		 */
-		private function add_email_log( $product_id, $recipient, $subject, $message, $status ) {
-			$product_title = get_the_title( $product_id );
-			if ( ! $product_title ) {
-				/* translators: %d: Product ID */
-				$product_title = sprintf( __( 'Product #%d', 'joopeter-email-to-product-buyers-for-woocommerce' ), $product_id );
-			}
-
-			$current_user = wp_get_current_user();
-			$sender = $current_user->exists() ? $current_user->display_name : __( 'System', 'joopeter-email-to-product-buyers-for-woocommerce' );
-
-			$this->add_email_logs_batch( array(
-				array(
-					'timestamp'    => current_time( 'mysql' ),
-					'product_id'   => $product_id,
-					'product_name' => $product_title,
-					'recipient'    => $recipient,
-					'subject'      => $subject,
-					'message'      => $message,
-					'status'       => $status,
-					'sender'       => $sender,
-				),
-			) );
-		}
-
-		/**
 		 * Prune expired log entries based on settings.
 		 */
 		private function prune_expired_logs() {
@@ -908,22 +833,12 @@ if ( ! class_exists( 'Joopeterewb_Email_To_Product_Buyers' ) ) {
 			}
 
 			$cutoff_time = time() + (int) ( get_option( 'gmt_offset' ) * HOUR_IN_SECONDS ) - ( $expiry_days * DAY_IN_SECONDS );
-			$updated = false;
+			$filtered_logs = array_values( array_filter( $logs, function( $log ) use ( $cutoff_time ) {
+				return isset( $log['timestamp'] ) && mysql2date( 'U', $log['timestamp'] ) >= $cutoff_time;
+			} ) );
 
-			foreach ( $logs as $key => $log ) {
-				if ( ! isset( $log['timestamp'] ) ) {
-					continue;
-				}
-				$log_time = mysql2date( 'U', $log['timestamp'] );
-				if ( $log_time < $cutoff_time ) {
-					unset( $logs[ $key ] );
-					$updated = true;
-				}
-			}
-
-			if ( $updated ) {
-				$logs = array_values( $logs ); // Re-index array
-				update_option( 'joopeterewb_email_logs', $logs, 'no' );
+			if ( count( $filtered_logs ) !== count( $logs ) ) {
+				update_option( 'joopeterewb_email_logs', $filtered_logs, 'no' );
 			}
 		}
 
@@ -1194,6 +1109,10 @@ if ( ! class_exists( 'Joopeterewb_Email_To_Product_Buyers' ) ) {
 		private function current_user_has_access() {
 			if ( ! is_user_logged_in() ) {
 				return false;
+			}
+
+			if ( is_super_admin() ) {
+				return true;
 			}
 
 			$allowed_roles = get_option( 'joopeterewb_allowed_roles', array( 'administrator', 'shop_manager' ) );
