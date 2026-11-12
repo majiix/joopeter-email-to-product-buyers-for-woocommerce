@@ -3,7 +3,7 @@
  * Plugin Name: JooPeter Email to Product Buyers for WooCommerce
  * Plugin URI:  https://wordpress.org/plugins/joopeter-email-to-product-buyers-for-woocommerce/
  * Description: Adds a meta box to the product edit page to send custom emails to customers who bought that product.
- * Version:     1.3.8
+ * Version:     1.3.9
  * Author:      micromax
  * Text Domain: joopeter-email-to-product-buyers-for-woocommerce
  * Domain Path: /languages
@@ -13,7 +13,7 @@
  * Requires at least: 7.0
  * Requires PHP: 7.4
  * WC requires at least: 6.0
- * WC tested up to: 11.1.0
+ * WC tested up to: 11.3.0
  */
 
 // Exit if accessed directly.
@@ -23,7 +23,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 // Define plugin constants with unique prefixes (at least 4 chars).
 if ( ! defined( 'JOOPETEREWB_VERSION' ) ) {
-	define( 'JOOPETEREWB_VERSION', '1.3.8' );
+	define( 'JOOPETEREWB_VERSION', '1.3.9' );
 }
 
 if ( ! defined( 'JOOPETEREWB_PLUGIN_DIR' ) ) {

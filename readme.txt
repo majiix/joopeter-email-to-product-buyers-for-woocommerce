@@ -3,10 +3,10 @@ Contributors: micromax2
 Tags: woocommerce, email, product, customers, marketing
 Requires at least: 7.0
 Tested up to: 7.1
-Stable tag: 1.3.8
+Stable tag: 1.3.9
 Requires PHP: 7.4
 WC requires at least: 6.0
-WC tested up to: 11.1.0
+WC tested up to: 11.3.0
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -57,6 +57,9 @@ You can customize log retention settings under the Permissions & Settings tab to
 Yes, the plugin features a cancelable 10-second countdown. If you click send and realize there is an issue, you can click the red "Cancel Send" button before the timer hits zero to safely abort the send.
 
 == Changelog ==
+
+= 1.3.9 =
+* Declared full compatibility with WooCommerce 11.3.0.
 
 = 1.3.8 =
 * Declared full compatibility with WooCommerce 11.1.0.
