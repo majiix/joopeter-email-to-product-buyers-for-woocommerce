@@ -24,6 +24,16 @@ if ( ! class_exists( 'Joopeterewb_Email_To_Product_Buyers' ) ) {
 		const CACHE_GROUP = 'JOOPETEREWB_cache_v1';
 
 		/**
+		 * Allowed WooCommerce order statuses for recipient filtering.
+		 */
+		const ALLOWED_STATUSES = array( 'processing', 'on-hold', 'completed', 'cancelled' );
+
+		/**
+		 * Default order statuses selected in the product meta box.
+		 */
+		const DEFAULT_STATUSES = array( 'processing', 'completed', 'on-hold' );
+
+		/**
 		 * Constructor.
 		 */
 		public function __construct() {
@@ -153,9 +163,15 @@ if ( ! class_exists( 'Joopeterewb_Email_To_Product_Buyers' ) ) {
 					'product_id' => $post->ID,
 					'nonce'      => wp_create_nonce( 'joopeterewb_email_action' ),
 					'strings'    => array(
-						'empty_fields' => __( 'Please fill in both Subject and Message fields.', 'joopeter-email-to-product-buyers-for-woocommerce' ),
-						'confirm_send' => __( 'Are you sure you want to send this email to all buyers?', 'joopeter-email-to-product-buyers-for-woocommerce' ),
-						'server_error' => __( 'Server error. Please try again.', 'joopeter-email-to-product-buyers-for-woocommerce' ),
+						'empty_fields'            => __( 'Please fill in both Subject and Message fields.', 'joopeter-email-to-product-buyers-for-woocommerce' ),
+						'select_status'           => __( 'Please select at least one order status.', 'joopeter-email-to-product-buyers-for-woocommerce' ),
+						'confirm_send'            => __( 'Are you sure you want to send this email to all buyers?', 'joopeter-email-to-product-buyers-for-woocommerce' ),
+						'confirm_send_non_buyers' => __( 'Are you sure you want to send this email to all selected customers, including buyers of other products?', 'joopeter-email-to-product-buyers-for-woocommerce' ),
+						'server_error'            => __( 'Server error. Please try again.', 'joopeter-email-to-product-buyers-for-woocommerce' ),
+						'send_email'              => __( 'Send Email', 'joopeter-email-to-product-buyers-for-woocommerce' ),
+						'sending'                 => __( 'Sending...', 'joopeter-email-to-product-buyers-for-woocommerce' ),
+						'customer_singular'       => __( 'customer found', 'joopeter-email-to-product-buyers-for-woocommerce' ),
+						'customer_plural'         => __( 'customers found', 'joopeter-email-to-product-buyers-for-woocommerce' ),
 					),
 				)
 			);
@@ -185,35 +201,59 @@ if ( ! class_exists( 'Joopeterewb_Email_To_Product_Buyers' ) ) {
 				return;
 			}
 
-			// Get the number of unique buyers.
-			$buyer_count = count( $this->get_buyer_emails( $post->ID ) );
+			// Get the number of unique buyers and available order years.
+			$buyer_count     = count( $this->get_buyer_emails( $post->ID ) );
+			$available_years = $this->get_available_order_years();
 			?>
 			<div class="joopeterewb-email-box-container">
 				<p class="description">
-					<?php esc_html_e( 'Send a custom email to all customers with "Processing", "On Hold", or "Completed" orders for this product.', 'joopeter-email-to-product-buyers-for-woocommerce' ); ?>
+					<?php esc_html_e( 'Send a custom email to customers matching your selected order statuses, order years, and audience scope.', 'joopeter-email-to-product-buyers-for-woocommerce' ); ?>
 				</p>
 
-				<div class="joopeterewb-chips-wrapper">
-					<label><?php esc_html_e( 'Select Filter Order Status:', 'joopeter-email-to-product-buyers-for-woocommerce' ); ?></label>
+				<fieldset class="joopeterewb-filter-group joopeterewb-chips-wrapper">
+					<legend><?php esc_html_e( 'Select Filter Order Status:', 'joopeter-email-to-product-buyers-for-woocommerce' ); ?></legend>
 					<div class="joopeterewb-status-chips">
-						<span class="joopeterewb-chip active" data-status="processing"><?php esc_html_e( 'Processing', 'joopeter-email-to-product-buyers-for-woocommerce' ); ?></span>
-						<span class="joopeterewb-chip active" data-status="on-hold"><?php esc_html_e( 'On Hold', 'joopeter-email-to-product-buyers-for-woocommerce' ); ?></span>
-						<span class="joopeterewb-chip active" data-status="completed"><?php esc_html_e( 'Completed', 'joopeter-email-to-product-buyers-for-woocommerce' ); ?></span>
+						<button type="button" class="joopeterewb-chip joopeterewb-status-chip active" data-status="processing" aria-pressed="true"><?php esc_html_e( 'Processing', 'joopeter-email-to-product-buyers-for-woocommerce' ); ?></button>
+						<button type="button" class="joopeterewb-chip joopeterewb-status-chip active" data-status="on-hold" aria-pressed="true"><?php esc_html_e( 'On Hold', 'joopeter-email-to-product-buyers-for-woocommerce' ); ?></button>
+						<button type="button" class="joopeterewb-chip joopeterewb-status-chip active" data-status="completed" aria-pressed="true"><?php esc_html_e( 'Completed', 'joopeter-email-to-product-buyers-for-woocommerce' ); ?></button>
+						<button type="button" class="joopeterewb-chip joopeterewb-status-chip" data-status="cancelled" aria-pressed="false"><?php esc_html_e( 'Cancelled', 'joopeter-email-to-product-buyers-for-woocommerce' ); ?></button>
 					</div>
+				</fieldset>
+
+				<fieldset class="joopeterewb-filter-group joopeterewb-chips-wrapper">
+					<legend><?php esc_html_e( 'Filter by Order Year:', 'joopeter-email-to-product-buyers-for-woocommerce' ); ?></legend>
+					<div class="joopeterewb-year-chips">
+						<button type="button" class="joopeterewb-chip joopeterewb-year-chip joopeterewb-year-all active" data-year="all" aria-pressed="true"><?php esc_html_e( 'All Years', 'joopeter-email-to-product-buyers-for-woocommerce' ); ?></button>
+						<?php foreach ( $available_years as $year ) : ?>
+							<button type="button" class="joopeterewb-chip joopeterewb-year-chip" data-year="<?php echo esc_attr( (string) $year ); ?>" aria-pressed="false"><?php echo esc_html( (string) $year ); ?></button>
+						<?php endforeach; ?>
+					</div>
+				</fieldset>
+
+				<div class="joopeterewb-filter-group joopeterewb-checkbox-field">
+					<div class="joopeterewb-checkbox-row">
+						<input type="checkbox" id="joopeterewb_include_non_buyers" name="joopeterewb_include_non_buyers" value="1" class="joopeterewb-checkbox-input" aria-describedby="joopeterewb_non_buyers_hint">
+						<label for="joopeterewb_include_non_buyers" class="joopeterewb-checkbox-label">
+							<?php esc_html_e( 'Include non-buyers of this product', 'joopeter-email-to-product-buyers-for-woocommerce' ); ?>
+						</label>
+					</div>
+					<p class="description joopeterewb-filter-hint" id="joopeterewb_non_buyers_hint">
+						<?php esc_html_e( 'Unchecked: buyers of this product only. Checked: also includes buyers of other products matching the selected status and year filters.', 'joopeter-email-to-product-buyers-for-woocommerce' ); ?>
+					</p>
 				</div>
 
 				<div class="joopeterewb-recipient-count">
-					<div class="joopeterewb-count-wrapper">
-						<span class="dashicons dashicons-groups"></span>
-						<strong id="joopeterewb-count-value"><?php echo esc_html( $buyer_count ); ?></strong>
+					<div class="joopeterewb-count-wrapper" aria-live="polite">
+						<span class="dashicons dashicons-groups" aria-hidden="true"></span>
+						<strong id="joopeterewb-count-value"><?php echo esc_html( (string) $buyer_count ); ?></strong>
 						<span id="joopeterewb-count-label">
 						<?php
 						echo esc_html( _n( 'customer found', 'customers found', $buyer_count, 'joopeter-email-to-product-buyers-for-woocommerce' ) );
 						?>
 						</span>
 					</div>
-					<button type="button" id="joopeterewb_refresh_count_btn" class="button button-small joopeterewb-refresh-btn" title="<?php esc_attr_e( 'Refresh count', 'joopeter-email-to-product-buyers-for-woocommerce' ); ?>">
-						<span class="dashicons dashicons-update"></span>
+					<button type="button" id="joopeterewb_refresh_count_btn" class="button button-small joopeterewb-refresh-btn" title="<?php esc_attr_e( 'Refresh count', 'joopeter-email-to-product-buyers-for-woocommerce' ); ?>" aria-label="<?php esc_attr_e( 'Refresh customer count', 'joopeter-email-to-product-buyers-for-woocommerce' ); ?>">
+						<span class="dashicons dashicons-update" aria-hidden="true"></span>
 					</button>
 				</div>
 
@@ -271,28 +311,20 @@ if ( ! class_exists( 'Joopeterewb_Email_To_Product_Buyers' ) ) {
 			}
 
 			$product_id = isset( $_POST['product_id'] ) ? absint( $_POST['product_id'] ) : 0;
-			if ( ! $product_id || ! current_user_can( 'edit_post', $product_id ) ) {
+			if ( ! $product_id || 'product' !== get_post_type( $product_id ) || ! current_user_can( 'edit_post', $product_id ) ) {
 				wp_send_json_error( __( 'Invalid product ID or insufficient permissions.', 'joopeter-email-to-product-buyers-for-woocommerce' ) );
 			}
 
-			$statuses = array( 'processing', 'completed', 'on-hold' );
-			if ( isset( $_POST['statuses'] ) ) {
-				$posted_statuses = map_deep( wp_unslash( $_POST['statuses'] ), 'sanitize_key' );
-				if ( is_array( $posted_statuses ) ) {
-					$statuses = array_map( 'sanitize_key', array_filter( $posted_statuses, 'is_scalar' ) );
-				} elseif ( is_scalar( $posted_statuses ) ) {
-					$statuses = array( sanitize_key( $posted_statuses ) );
-				}
-			}
-			if ( empty( $statuses ) ) {
-				$statuses = array( 'processing', 'completed', 'on-hold' );
-			}
+			$filters            = $this->parse_filter_params_from_post();
+			$statuses           = $filters['statuses'];
+			$include_non_buyers = $filters['include_non_buyers'];
+			$years              = $filters['years'];
 
-			// Force clear cache for this product.
-			wp_cache_delete( 'JOOPETEREWB_buyer_emails_' . $product_id, self::CACHE_GROUP );
+			// Force clear the corresponding cache key before recalculating.
+			$cache_key = $include_non_buyers ? 'JOOPETEREWB_all_buyer_emails' : 'JOOPETEREWB_buyer_emails_' . $product_id;
+			wp_cache_delete( $cache_key, self::CACHE_GROUP );
 
-			// Re-calculate counts (this will trigger fresh DB query and cache set).
-			$emails = $this->get_buyer_emails( $product_id, $statuses );
+			$emails = empty( $statuses ) ? array() : $this->get_buyer_emails( $product_id, $statuses, $include_non_buyers, $years );
 			$count  = count( $emails );
 
 			$label = _n( 'customer found', 'customers found', $count, 'joopeter-email-to-product-buyers-for-woocommerce' );
@@ -314,26 +346,15 @@ if ( ! class_exists( 'Joopeterewb_Email_To_Product_Buyers' ) ) {
 			}
 
 			$product_id = isset( $_POST['product_id'] ) ? absint( $_POST['product_id'] ) : 0;
-			if ( ! $product_id || ! current_user_can( 'edit_post', $product_id ) ) {
+			if ( ! $product_id || 'product' !== get_post_type( $product_id ) || ! current_user_can( 'edit_post', $product_id ) ) {
 				wp_send_json_error( __( 'Invalid product ID or insufficient permissions.', 'joopeter-email-to-product-buyers-for-woocommerce' ) );
 			}
 
-			$subject    = isset( $_POST['subject'] ) && is_scalar( $_POST['subject'] ) ? sanitize_text_field( wp_unslash( $_POST['subject'] ) ) : '';
-			$message    = isset( $_POST['message'] ) && is_scalar( $_POST['message'] ) ? wp_kses_post( wp_unslash( $_POST['message'] ) ) : '';
-			$statuses = array( 'processing', 'completed', 'on-hold' );
-			if ( isset( $_POST['statuses'] ) ) {
-				$posted_statuses = map_deep( wp_unslash( $_POST['statuses'] ), 'sanitize_key' );
-				if ( is_array( $posted_statuses ) ) {
-					$statuses = array_map( 'sanitize_key', array_filter( $posted_statuses, 'is_scalar' ) );
-				} elseif ( is_scalar( $posted_statuses ) ) {
-					$statuses = array( sanitize_key( $posted_statuses ) );
-				}
-			}
-			if ( empty( $statuses ) ) {
-				$statuses = array( 'processing', 'completed', 'on-hold' );
-			}
-			$offset     = isset( $_POST['offset'] ) ? absint( $_POST['offset'] ) : 0;
-			$limit      = isset( $_POST['limit'] ) ? absint( $_POST['limit'] ) : 10;
+			$subject = isset( $_POST['subject'] ) && is_scalar( $_POST['subject'] ) ? sanitize_text_field( wp_unslash( $_POST['subject'] ) ) : '';
+			$message = isset( $_POST['message'] ) && is_scalar( $_POST['message'] ) ? wp_kses_post( wp_unslash( $_POST['message'] ) ) : '';
+			$filters = $this->parse_filter_params_from_post();
+			$offset  = isset( $_POST['offset'] ) ? absint( $_POST['offset'] ) : 0;
+			$limit   = isset( $_POST['limit'] ) ? absint( $_POST['limit'] ) : 10;
 			if ( $limit <= 0 ) {
 				$limit = 10;
 			}
@@ -345,22 +366,45 @@ if ( ! class_exists( 'Joopeterewb_Email_To_Product_Buyers' ) ) {
 				wp_send_json_error( __( 'Missing required fields.', 'joopeter-email-to-product-buyers-for-woocommerce' ) );
 			}
 
-			// Fetch emails directly using robust SQL, or use custom passed list.
-			$custom_emails = array();
+			if ( empty( $filters['statuses'] ) ) {
+				wp_send_json_error( __( 'Please select at least one order status.', 'joopeter-email-to-product-buyers-for-woocommerce' ) );
+			}
+
+			// Fetch authorized recipients from orders, restricting any retry subset to that set.
+			$allowed_emails = $this->get_buyer_emails(
+				$product_id,
+				$filters['statuses'],
+				$filters['include_non_buyers'],
+				$filters['years']
+			);
+
 			if ( isset( $_POST['emails'] ) ) {
 				$posted_emails = map_deep( wp_unslash( $_POST['emails'] ), 'sanitize_email' );
+				$custom_emails = array();
 				if ( is_array( $posted_emails ) ) {
-					$custom_emails = array_map( 'sanitize_email', array_filter( $posted_emails, 'is_scalar' ) );
-				} elseif ( is_scalar( $posted_emails ) ) {
-					$custom_emails = array( sanitize_email( $posted_emails ) );
+					$custom_emails = array_filter(
+						$posted_emails,
+						static function ( $email ) {
+							return is_string( $email ) && is_email( $email );
+						}
+					);
+				} elseif ( is_string( $posted_emails ) && is_email( $posted_emails ) ) {
+					$custom_emails = array( $posted_emails );
 				}
-			}
-			if ( ! empty( $custom_emails ) ) {
-				$emails = $custom_emails;
+				$custom_emails = array_values( array_unique( $custom_emails ) );
+				$allowed_map   = array_flip( array_map( 'strtolower', $allowed_emails ) );
+				$emails        = array_values(
+					array_filter(
+						$custom_emails,
+						static function ( $email ) use ( $allowed_map ) {
+							return isset( $allowed_map[ strtolower( $email ) ] );
+						}
+					)
+				);
 			} else {
-				$emails = $this->get_buyer_emails( $product_id, $statuses );
+				$emails = $allowed_emails;
 			}
-			$total  = count( $emails );
+			$total = count( $emails );
 
 			if ( empty( $emails ) ) {
 				wp_send_json_error( __( 'No valid customer emails found.', 'joopeter-email-to-product-buyers-for-woocommerce' ) );
@@ -508,13 +552,15 @@ if ( ! class_exists( 'Joopeterewb_Email_To_Product_Buyers' ) ) {
 				return;
 			}
 
-			// We only care if the order is processing, completed, or on-hold.
-			$relevant_statuses = array( 'processing', 'completed', 'on-hold', 'wc-processing', 'wc-completed', 'wc-on-hold' );
+			// We care about processing, completed, on-hold, and cancelled orders.
+			$relevant_statuses = $this->expand_wc_statuses( self::ALLOWED_STATUSES );
 			if ( ! in_array( $order->get_status(), $relevant_statuses, true ) ) {
 				return;
 			}
 
 			$this->clear_product_cache_for_order( $order );
+			wp_cache_delete( 'JOOPETEREWB_all_buyer_emails', self::CACHE_GROUP );
+			wp_cache_delete( 'JOOPETEREWB_order_years', self::CACHE_GROUP );
 		}
 
 		/**
@@ -530,8 +576,8 @@ if ( ! class_exists( 'Joopeterewb_Email_To_Product_Buyers' ) ) {
 				return;
 			}
 
-			// We only care if an order enters or leaves processing/completed/on-hold.
-			$relevant_statuses = array( 'processing', 'completed', 'on-hold', 'wc-processing', 'wc-completed', 'wc-on-hold' );
+			// We care when an order enters or leaves any supported status.
+			$relevant_statuses = $this->expand_wc_statuses( self::ALLOWED_STATUSES );
 
 			if ( ! in_array( $to, $relevant_statuses, true ) && ! in_array( $from, $relevant_statuses, true ) ) {
 				return;
@@ -546,117 +592,376 @@ if ( ! class_exists( 'Joopeterewb_Email_To_Product_Buyers' ) ) {
 			}
 
 			$this->clear_product_cache_for_order( $order );
+			wp_cache_delete( 'JOOPETEREWB_all_buyer_emails', self::CACHE_GROUP );
+			wp_cache_delete( 'JOOPETEREWB_order_years', self::CACHE_GROUP );
 		}
 
+		/**
+		 * Sanitize and validate order statuses against the allowed status list.
+		 *
+		 * @param mixed              $raw_statuses Raw status value or array of values.
+		 * @param array<int, string> $fallback     Optional fallback statuses when sanitized result is empty.
+		 * @return array<int, string>
+		 */
+		public static function sanitize_statuses( $raw_statuses, array $fallback = array() ) {
+			$items = is_array( $raw_statuses ) ? $raw_statuses : ( is_scalar( $raw_statuses ) ? array( $raw_statuses ) : array() );
+			$clean = array();
+
+			foreach ( $items as $item ) {
+				if ( ! is_scalar( $item ) ) {
+					continue;
+				}
+				$status = sanitize_key( (string) $item );
+				if ( 0 === strpos( $status, 'wc-' ) ) {
+					$status = substr( $status, 3 );
+				}
+				if ( in_array( $status, self::ALLOWED_STATUSES, true ) ) {
+					$clean[] = $status;
+				}
+			}
+
+			$clean = array_values( array_unique( $clean ) );
+			sort( $clean );
+
+			if ( empty( $clean ) && ! empty( $fallback ) ) {
+				return $fallback;
+			}
+
+			return $clean;
+		}
+
+		/**
+		 * Sanitize and validate four-digit order years.
+		 *
+		 * @param mixed $raw_years Raw year value or array of year values.
+		 * @return array<int, int>
+		 */
+		public static function sanitize_years( $raw_years ) {
+			$items = is_array( $raw_years ) ? $raw_years : ( is_scalar( $raw_years ) ? array( $raw_years ) : array() );
+			$clean = array();
+
+			foreach ( $items as $item ) {
+				if ( ! is_scalar( $item ) ) {
+					continue;
+				}
+				$year_str = trim( (string) $item );
+				if ( ! ctype_digit( $year_str ) ) {
+					continue;
+				}
+				$year = absint( $year_str );
+				if ( $year >= 1970 && $year <= 2100 ) {
+					$clean[] = $year;
+				}
+			}
+
+			$clean = array_values( array_unique( $clean ) );
+			sort( $clean, SORT_NUMERIC );
+
+			return $clean;
+		}
+
+		/**
+		 * Build inclusive SQL datetime ranges for each selected year.
+		 *
+		 * @param array<int, int>    $years    Validated order years.
+		 * @param bool               $to_utc   Whether to convert site-local year bounds to UTC.
+		 * @param \DateTimeZone|null $timezone Optional timezone override; defaults to wp_timezone().
+		 * @return array<int, array{start: string, end: string}>
+		 */
+		public static function build_year_date_ranges( array $years, $to_utc = true, $timezone = null ) {
+			$valid_years = self::sanitize_years( $years );
+			if ( empty( $valid_years ) ) {
+				return array();
+			}
+
+			if ( ! $timezone instanceof \DateTimeZone ) {
+				$timezone = function_exists( 'wp_timezone' ) ? wp_timezone() : new \DateTimeZone( 'UTC' );
+			}
+			$utc_tz = new \DateTimeZone( 'UTC' );
+			$ranges = array();
+
+			foreach ( $valid_years as $year ) {
+				$start_dt = new \DateTimeImmutable( sprintf( '%04d-01-01 00:00:00', $year ), $timezone );
+				$end_dt   = new \DateTimeImmutable( sprintf( '%04d-12-31 23:59:59', $year ), $timezone );
+
+				if ( $to_utc ) {
+					$start_dt = $start_dt->setTimezone( $utc_tz );
+					$end_dt   = $end_dt->setTimezone( $utc_tz );
+				}
+
+				$ranges[] = array(
+					'start' => $start_dt->format( 'Y-m-d H:i:s' ),
+					'end'   => $end_dt->format( 'Y-m-d H:i:s' ),
+				);
+			}
+
+			return $ranges;
+		}
+
+		/**
+		 * Parse and sanitize recipient filter parameters from the current AJAX POST request.
+		 *
+		 * @return array{statuses: array<int, string>, include_non_buyers: bool, years: array<int, int>}
+		 */
+		private function parse_filter_params_from_post() {
+			// phpcs:disable WordPress.Security.NonceVerification.Missing -- Nonce is verified by calling AJAX handlers.
+			$filters_submitted = isset( $_POST['filters_submitted'] );
+			$statuses          = self::DEFAULT_STATUSES;
+
+			if ( isset( $_POST['statuses'] ) ) {
+				// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Sanitized immediately inside sanitize_statuses().
+				$statuses = self::sanitize_statuses( wp_unslash( $_POST['statuses'] ) );
+			} elseif ( $filters_submitted ) {
+				$statuses = array();
+			}
+
+			$include_non_buyers = false;
+			if ( isset( $_POST['include_non_buyers'] ) && is_scalar( $_POST['include_non_buyers'] ) ) {
+				$include_non_buyers = (bool) rest_sanitize_boolean( sanitize_text_field( wp_unslash( $_POST['include_non_buyers'] ) ) );
+			}
+
+			$years = array();
+			if ( isset( $_POST['years'] ) ) {
+				// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Sanitized immediately inside sanitize_years().
+				$years = self::sanitize_years( wp_unslash( $_POST['years'] ) );
+			}
+			// phpcs:enable WordPress.Security.NonceVerification.Missing
+
+			return array(
+				'statuses'           => $statuses,
+				'include_non_buyers' => $include_non_buyers,
+				'years'              => $years,
+			);
+		}
+
+		/**
+		 * Expand clean status slugs to include both clean and wc- prefixed variants.
+		 *
+		 * @param array<int, string> $statuses Clean status slugs.
+		 * @return array<int, string>
+		 */
+		private function expand_wc_statuses( array $statuses ) {
+			$expanded = array();
+			foreach ( $statuses as $status ) {
+				$clean      = str_replace( 'wc-', '', $status );
+				$expanded[] = $clean;
+				$expanded[] = 'wc-' . $clean;
+			}
+			return array_values( array_unique( $expanded ) );
+		}
+
+		/**
+		 * Get distinct order years available in the store, sorted newest first.
+		 *
+		 * @return array<int, int>
+		 */
+		private function get_available_order_years() {
+			if ( ! class_exists( 'WooCommerce' ) ) {
+				return array( (int) gmdate( 'Y' ) );
+			}
+
+			$cache_key = 'JOOPETEREWB_order_years';
+			$cached    = wp_cache_get( $cache_key, self::CACHE_GROUP );
+			if ( is_array( $cached ) && ! empty( $cached ) ) {
+				return $cached;
+			}
+
+			global $wpdb;
+			$all_statuses        = $this->expand_wc_statuses( self::ALLOWED_STATUSES );
+			$status_placeholders = implode( ',', array_fill( 0, count( $all_statuses ), '%s' ) );
+			$hpos_enabled        = class_exists( '\Automattic\WooCommerce\Utilities\OrderUtil' ) && \Automattic\WooCommerce\Utilities\OrderUtil::custom_orders_table_usage_is_enabled();
+			$raw_years           = array();
+
+			if ( $hpos_enabled ) {
+				$hpos_table     = $wpdb->prefix . 'wc_orders';
+				$offset_seconds = (int) round( (float) get_option( 'gmt_offset', 0 ) * HOUR_IN_SECONDS );
+				$query_args     = array_merge( array( $offset_seconds ), $all_statuses );
+				// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
+				$raw_years = $wpdb->get_col( $wpdb->prepare( "SELECT DISTINCT YEAR(DATE_ADD(o.date_created_gmt, INTERVAL %d SECOND)) FROM {$hpos_table} o WHERE o.type = 'shop_order' AND o.status IN ($status_placeholders) AND o.date_created_gmt > '1970-01-01 00:00:00' ORDER BY 1 DESC", $query_args ) );
+				// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
+			} else {
+				// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
+				$raw_years = $wpdb->get_col( $wpdb->prepare( "SELECT DISTINCT YEAR(p.post_date) FROM {$wpdb->posts} p WHERE p.post_type = 'shop_order' AND p.post_status IN ($status_placeholders) AND p.post_date > '1970-01-01 00:00:00' ORDER BY 1 DESC", $all_statuses ) );
+				// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
+			}
+
+			$years = self::sanitize_years( is_array( $raw_years ) ? $raw_years : array() );
+			rsort( $years, SORT_NUMERIC );
+
+			if ( empty( $years ) ) {
+				$years = array( (int) wp_date( 'Y' ) );
+			}
+
+			wp_cache_set( $cache_key, $years, self::CACHE_GROUP, 300 );
+
+			return $years;
+		}
+
+		/**
+		 * Build a parameterized SQL date-range condition for the requested years.
+		 *
+		 * @param string             $column_name Allowlisted SQL datetime column.
+		 * @param array<int, int>    $years       Validated order years.
+		 * @param bool               $to_utc      Whether the column stores UTC timestamps.
+		 * @param array<int, mixed>  $query_args  Prepared statement argument list passed by reference.
+		 * @return string
+		 */
+		private function build_year_sql_clause( $column_name, array $years, $to_utc, array &$query_args ) {
+			$allowed_columns = array( 'o.date_created_gmt', 'p.post_date' );
+			if ( ! in_array( $column_name, $allowed_columns, true ) ) {
+				return '';
+			}
+
+			$ranges = self::build_year_date_ranges( $years, $to_utc );
+			if ( empty( $ranges ) ) {
+				return '';
+			}
+
+			$clauses = array();
+			foreach ( $ranges as $range ) {
+				$clauses[]    = "({$column_name} >= %s AND {$column_name} <= %s)";
+				$query_args[] = $range['start'];
+				$query_args[] = $range['end'];
+			}
+
+			return ' AND (' . implode( ' OR ', $clauses ) . ')';
+		}
 
 		/**
 		 * Helper to get unique buyer emails using optimized direct SQL.
-		 * Uses indexed single-pass JOIN query to eliminate intermediate PHP array allocations.
-		 * Includes object caching to satisfy linter and maximize performance.
+		 * Supports filtering by status, order year(s), and optional inclusion of buyers of other products.
 		 *
-		 * @param int   $product_id
-		 * @param array $statuses
-		 * @return array
+		 * @param int                $product_id         Product ID.
+		 * @param array<int, string> $statuses           Order statuses to include.
+		 * @param bool               $include_non_buyers Whether to include buyers of other products.
+		 * @param array<int, int>    $years              Optional order years filter; empty means all years.
+		 * @return array<int, string>
 		 */
-		private function get_buyer_emails( $product_id, $statuses = array( 'processing', 'completed', 'on-hold' ) ) {
+		private function get_buyer_emails( $product_id, $statuses = self::DEFAULT_STATUSES, $include_non_buyers = false, $years = array() ) {
 			if ( ! class_exists( 'WooCommerce' ) ) {
 				return array();
 			}
 
-			global $wpdb;
+			$statuses           = self::sanitize_statuses( $statuses );
+			$years              = self::sanitize_years( $years );
+			$include_non_buyers = (bool) $include_non_buyers;
 
-			$cache_key = 'JOOPETEREWB_buyer_emails_' . $product_id;
+			if ( empty( $statuses ) ) {
+				return array();
+			}
+
+			$cache_key  = $include_non_buyers ? 'JOOPETEREWB_all_buyer_emails' : 'JOOPETEREWB_buyer_emails_' . $product_id;
 			$cache_data = wp_cache_get( $cache_key, self::CACHE_GROUP );
 			if ( ! is_array( $cache_data ) ) {
 				$cache_data = array();
 			}
 
-			// Generate a hash based on the sorted statuses
-			sort( $statuses );
-			$statuses_hash = md5( implode( '_', $statuses ) );
+			$filter_hash = md5(
+				implode(
+					'|',
+					array(
+						implode( ',', $statuses ),
+						$include_non_buyers ? '1' : '0',
+						implode( ',', $years ),
+					)
+				)
+			);
 
-			if ( isset( $cache_data[ $statuses_hash ] ) ) {
-				return $cache_data[ $statuses_hash ];
+			if ( isset( $cache_data[ $filter_hash ] ) ) {
+				return $cache_data[ $filter_hash ];
 			}
 
-			// 1. Get Product IDs (Main + Variations)
-			$product_ids = $this->get_product_ids_including_variations( $product_id );
-			$product_ids = array_values( array_filter( array_map( 'absint', $product_ids ) ) );
+			$product_ids = array();
+			if ( ! $include_non_buyers ) {
+				$product_ids = $this->get_product_ids_including_variations( $product_id );
+				$product_ids = array_values( array_filter( array_map( 'absint', $product_ids ) ) );
 
-			if ( empty( $product_ids ) ) {
-				$cache_data[ $statuses_hash ] = array();
-				wp_cache_set( $cache_key, $cache_data, self::CACHE_GROUP, 300 );
-				return array();
+				if ( empty( $product_ids ) ) {
+					$cache_data[ $filter_hash ] = array();
+					wp_cache_set( $cache_key, $cache_data, self::CACHE_GROUP, 300 );
+					return array();
+				}
 			}
 
-			// Map statuses to both clean and wc- prefixed for backwards compatibility.
-			$all_possible_statuses = array();
-			foreach ( $statuses as $status ) {
-				$clean = str_replace( 'wc-', '', $status );
-				$all_possible_statuses[] = $clean;
-				$all_possible_statuses[] = 'wc-' . $clean;
-			}
-			$all_possible_statuses = array_values( array_unique( $all_possible_statuses ) );
-
-			// Dynamic placeholders for product IDs and statuses
-			$ids_placeholder = implode( ',', array_fill( 0, count( $product_ids ), '%d' ) );
-			$status_placeholders = implode( ',', array_fill( 0, count( $all_possible_statuses ), '%s' ) );
-			$query_args = array_merge( $product_ids, $all_possible_statuses );
-
-			$hpos_enabled = class_exists( '\Automattic\WooCommerce\Utilities\OrderUtil' ) && \Automattic\WooCommerce\Utilities\OrderUtil::custom_orders_table_usage_is_enabled();
-			$all_emails = array();
+			$all_possible_statuses = $this->expand_wc_statuses( $statuses );
+			$hpos_enabled          = class_exists( '\Automattic\WooCommerce\Utilities\OrderUtil' ) && \Automattic\WooCommerce\Utilities\OrderUtil::custom_orders_table_usage_is_enabled();
 
 			if ( $hpos_enabled ) {
-				$hpos_table = $wpdb->prefix . 'wc_orders';
-				// Single-pass direct JOIN query for HPOS
-				// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
-				$hpos_emails = $wpdb->get_col( $wpdb->prepare( "
-					SELECT DISTINCT o.billing_email
-					FROM {$hpos_table} o
-					INNER JOIN {$wpdb->prefix}woocommerce_order_items oi ON o.id = oi.order_id
-					INNER JOIN {$wpdb->prefix}woocommerce_order_itemmeta oim ON oi.order_item_id = oim.order_item_id
-					WHERE oi.order_item_type = 'line_item'
-					AND oim.meta_key IN ( '_product_id', '_variation_id' )
-					AND oim.meta_value IN ($ids_placeholder)
-					AND o.status IN ($status_placeholders)
-					AND o.billing_email != ''
-				", $query_args ) );
-				// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
-
-				if ( is_array( $hpos_emails ) ) {
-					$all_emails = $hpos_emails;
-				}
+				$all_emails = $this->query_hpos_buyer_emails( $product_ids, $all_possible_statuses, $include_non_buyers, $years );
 			} else {
-				// Single-pass direct JOIN query for Legacy Postmeta
-				// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
-				$legacy_emails = $wpdb->get_col( $wpdb->prepare( "
-					SELECT DISTINCT pm.meta_value
-					FROM {$wpdb->postmeta} pm
-					INNER JOIN {$wpdb->posts} p ON pm.post_id = p.ID
-					INNER JOIN {$wpdb->prefix}woocommerce_order_items oi ON p.ID = oi.order_id
-					INNER JOIN {$wpdb->prefix}woocommerce_order_itemmeta oim ON oi.order_item_id = oim.order_item_id
-					WHERE oi.order_item_type = 'line_item'
-					AND oim.meta_key IN ( '_product_id', '_variation_id' )
-					AND oim.meta_value IN ($ids_placeholder)
-					AND pm.meta_key = '_billing_email'
-					AND pm.meta_value != ''
-					AND p.post_type = 'shop_order'
-					AND p.post_status IN ($status_placeholders)
-				", $query_args ) );
-				// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
-
-				if ( is_array( $legacy_emails ) ) {
-					$all_emails = $legacy_emails;
-				}
+				$all_emails = $this->query_legacy_buyer_emails( $product_ids, $all_possible_statuses, $include_non_buyers, $years );
 			}
 
-			$final_emails = array_values( array_filter( array_unique( $all_emails ), 'is_email' ) );
-
-			// Store in cache
-			$cache_data[ $statuses_hash ] = $final_emails;
+			$final_emails               = array_values( array_filter( array_unique( $all_emails ), 'is_email' ) );
+			$cache_data[ $filter_hash ] = $final_emails;
 			wp_cache_set( $cache_key, $cache_data, self::CACHE_GROUP, 300 );
 
 			return $final_emails;
+		}
+
+		/**
+		 * Query unique billing emails from WooCommerce HPOS order tables.
+		 *
+		 * @param array<int, int>    $product_ids        Product and variation IDs.
+		 * @param array<int, string> $wc_statuses        Expanded order statuses.
+		 * @param bool               $include_non_buyers Whether to query all store orders.
+		 * @param array<int, int>    $years              Validated order years.
+		 * @return array<int, string>
+		 */
+		private function query_hpos_buyer_emails( array $product_ids, array $wc_statuses, $include_non_buyers, array $years ) {
+			global $wpdb;
+			$hpos_table          = $wpdb->prefix . 'wc_orders';
+			$status_placeholders = implode( ',', array_fill( 0, count( $wc_statuses ), '%s' ) );
+
+			if ( $include_non_buyers ) {
+				$query_args  = $wc_statuses;
+				$year_clause = $this->build_year_sql_clause( 'o.date_created_gmt', $years, true, $query_args );
+				// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
+				$emails = $wpdb->get_col( $wpdb->prepare( "SELECT DISTINCT o.billing_email FROM {$hpos_table} o WHERE o.type = 'shop_order' AND o.status IN ($status_placeholders) AND o.billing_email != ''{$year_clause}", $query_args ) );
+				// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
+				return is_array( $emails ) ? $emails : array();
+			}
+
+			$ids_placeholder = implode( ',', array_fill( 0, count( $product_ids ), '%d' ) );
+			$query_args      = array_merge( $product_ids, $wc_statuses );
+			$year_clause     = $this->build_year_sql_clause( 'o.date_created_gmt', $years, true, $query_args );
+			// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
+			$emails = $wpdb->get_col( $wpdb->prepare( "SELECT DISTINCT o.billing_email FROM {$hpos_table} o INNER JOIN {$wpdb->prefix}woocommerce_order_items oi ON o.id = oi.order_id INNER JOIN {$wpdb->prefix}woocommerce_order_itemmeta oim ON oi.order_item_id = oim.order_item_id WHERE oi.order_item_type = 'line_item' AND oim.meta_key IN ( '_product_id', '_variation_id' ) AND oim.meta_value IN ($ids_placeholder) AND o.type = 'shop_order' AND o.status IN ($status_placeholders) AND o.billing_email != ''{$year_clause}", $query_args ) );
+			// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
+
+			return is_array( $emails ) ? $emails : array();
+		}
+
+		/**
+		 * Query unique billing emails from legacy WordPress posts/postmeta order tables.
+		 *
+		 * @param array<int, int>    $product_ids        Product and variation IDs.
+		 * @param array<int, string> $wc_statuses        Expanded order statuses.
+		 * @param bool               $include_non_buyers Whether to query all store orders.
+		 * @param array<int, int>    $years              Validated order years.
+		 * @return array<int, string>
+		 */
+		private function query_legacy_buyer_emails( array $product_ids, array $wc_statuses, $include_non_buyers, array $years ) {
+			global $wpdb;
+			$status_placeholders = implode( ',', array_fill( 0, count( $wc_statuses ), '%s' ) );
+
+			if ( $include_non_buyers ) {
+				$query_args  = $wc_statuses;
+				$year_clause = $this->build_year_sql_clause( 'p.post_date', $years, false, $query_args );
+				// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
+				$emails = $wpdb->get_col( $wpdb->prepare( "SELECT DISTINCT pm.meta_value FROM {$wpdb->postmeta} pm INNER JOIN {$wpdb->posts} p ON pm.post_id = p.ID WHERE pm.meta_key = '_billing_email' AND pm.meta_value != '' AND p.post_type = 'shop_order' AND p.post_status IN ($status_placeholders){$year_clause}", $query_args ) );
+				// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
+				return is_array( $emails ) ? $emails : array();
+			}
+
+			$ids_placeholder = implode( ',', array_fill( 0, count( $product_ids ), '%d' ) );
+			$query_args      = array_merge( $product_ids, $wc_statuses );
+			$year_clause     = $this->build_year_sql_clause( 'p.post_date', $years, false, $query_args );
+			// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
+			$emails = $wpdb->get_col( $wpdb->prepare( "SELECT DISTINCT pm.meta_value FROM {$wpdb->postmeta} pm INNER JOIN {$wpdb->posts} p ON pm.post_id = p.ID INNER JOIN {$wpdb->prefix}woocommerce_order_items oi ON p.ID = oi.order_id INNER JOIN {$wpdb->prefix}woocommerce_order_itemmeta oim ON oi.order_item_id = oim.order_item_id WHERE oi.order_item_type = 'line_item' AND oim.meta_key IN ( '_product_id', '_variation_id' ) AND oim.meta_value IN ($ids_placeholder) AND pm.meta_key = '_billing_email' AND pm.meta_value != '' AND p.post_type = 'shop_order' AND p.post_status IN ($status_placeholders){$year_clause}", $query_args ) );
+			// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
+
+			return is_array( $emails ) ? $emails : array();
 		}
 
 		/**

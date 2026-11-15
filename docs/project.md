@@ -17,8 +17,9 @@ JooPeter Email to Product Buyers for WooCommerce is a WordPress plugin that adds
 3. **Admin Assets**: `assets/js/admin.js` and `assets/css/admin.css` handle the tabbed dashboard interface, modals, batch sending logic, and styling.
 
 ## Current Features
-- **Product-Specific Emails**: Send custom emails targeting customers of a specific WooCommerce product.
-- **Order Status Filters**: Select recipients based on their order statuses (Processing, On Hold, Completed).
+- **Product-Specific & Store-Wide Audience Scope**: Target buyers of the current product (default), or check "Include non-buyers of this product" to also include buyers of other products matching the active status and year filters.
+- **Order Status Filters**: Toggle recipients by order status (Processing, On Hold, Completed selected by default; Cancelled unselected by default).
+- **Multi-Select Order Year Filters**: Filter recipients by "All Years" (default) or one or more specific order years populated dynamically from store orders.
 - **Batch Sending**: Process emails in chunks to prevent server timeouts and resource limits.
 - **Sending Delay**: 10-second cancelable delay before starting the batch processing.
 - **Email History Logs**: Track sent emails, timestamps, senders, and delivery status (Success / Failed).
@@ -38,8 +39,8 @@ JooPeter Email to Product Buyers for WooCommerce is a WordPress plugin that adds
   - Comprehensive variation parent cache invalidation in order updates (`clear_product_cache_for_order`).
   - Direct integration with WooCommerce `OrderUtil::custom_orders_table_usage_is_enabled()`.
   - Non-autoloading logs (`joopeterewb_email_logs` has autoload = 'no') for site speed.
-  - Object caching for customer email queries (`wp_cache_get` / `wp_cache_set`).
-  - Cache invalidation on order status changes and updates (`woocommerce_update_order`).
+  - Object caching for customer email queries (`wp_cache_get` / `wp_cache_set`) across per-product (`JOOPETEREWB_buyer_emails_<id>`), store-wide (`JOOPETEREWB_all_buyer_emails`), and order year (`JOOPETEREWB_order_years`) keys.
+  - Cache invalidation on order status changes and updates (`woocommerce_update_order`, `woocommerce_order_status_changed`), including `cancelled` orders.
 
 ## Verification Commands
 - PHP Syntax Check:
@@ -47,6 +48,12 @@ JooPeter Email to Product Buyers for WooCommerce is a WordPress plugin that adds
   rtk php -l joopeter-email-to-product-buyers-for-woocommerce.php
   rtk php -l includes/class-joopeter-email-to-product-buyers.php
   rtk php -l uninstall.php
+  rtk php -l tests/FilterHelpersTest.php
+  ```
+
+- Unit Tests:
+  ```bash
+  rtk php tests/FilterHelpersTest.php
   ```
 
 - Static Analysis (when dev dependencies are installed):

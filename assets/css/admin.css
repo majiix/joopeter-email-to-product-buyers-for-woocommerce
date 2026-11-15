@@ -137,43 +137,59 @@
     vertical-align: middle;
 }
 
-/* Sidebar metabox chips styles */
+/* Sidebar metabox filter groups & chips styles */
+.joopeterewb-filter-group {
+    border: 0;
+    padding: 0;
+    margin: 0 0 12px;
+    min-inline-size: 0;
+}
+
 .joopeterewb-chips-wrapper {
     margin-bottom: 12px;
 }
 
-.joopeterewb-chips-wrapper label {
+.joopeterewb-chips-wrapper label,
+.joopeterewb-chips-wrapper legend {
     font-weight: 600;
     display: block;
+    padding: 0;
     margin-bottom: 8px;
     font-size: 13px;
     color: var(--joopeterewb-text);
 }
 
-.joopeterewb-status-chips {
+.joopeterewb-status-chips,
+.joopeterewb-year-chips {
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
 }
 
 .joopeterewb-chip {
-    display: inline-block;
+    appearance: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     padding: 6px 12px;
+    min-block-size: 28px;
     background: #ffffff;
     border: 1px solid var(--joopeterewb-border);
     border-radius: 16px;
+    font-family: inherit;
     font-size: 12px;
     font-weight: 500;
+    line-height: 1.4;
     cursor: pointer;
     user-select: none;
     color: var(--joopeterewb-text-secondary);
     transition: var(--joopeterewb-transition);
 }
 
-.joopeterewb-chip:hover {
+.joopeterewb-chip:hover:not(:disabled) {
     background: var(--joopeterewb-bg);
     border-color: #cbd5e1;
-    color: var(--joopeterewb-text);
+    color: #ff9800;
 }
 
 .joopeterewb-chip.active {
@@ -183,9 +199,70 @@
     box-shadow: 0 2px 4px rgba(88, 80, 236, 0.2);
 }
 
-.joopeterewb-chip.active:hover {
+.joopeterewb-chip.active:hover:not(:disabled) {
     background: var(--joopeterewb-primary-dark);
     border-color: var(--joopeterewb-primary-dark);
+}
+
+.joopeterewb-chip:focus-visible {
+    outline: 2px solid var(--joopeterewb-primary);
+    outline-offset: 2px;
+}
+
+.joopeterewb-chip:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Non-buyers audience checkbox */
+.joopeterewb-checkbox-field {
+    background: var(--joopeterewb-bg);
+    border: 1px solid var(--joopeterewb-border);
+    border-radius: 6px;
+    padding: 4px 12px 10px;
+}
+
+.joopeterewb-checkbox-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.joopeterewb-checkbox-input {
+    accent-color: var(--joopeterewb-primary);
+    inline-size: 1.15em;
+    aspect-ratio: 1;
+    margin: 0 !important;
+    flex-shrink: 0;
+    cursor: pointer;
+}
+
+.joopeterewb-checkbox-input:focus-visible {
+    outline: 2px solid var(--joopeterewb-primary);
+    outline-offset: 2px;
+}
+
+.joopeterewb-checkbox-input:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+.joopeterewb-email-box-container .joopeterewb-checkbox-label {
+    display: inline-flex;
+    align-items: center;
+    min-block-size: 44px;
+    margin-bottom: 0;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--joopeterewb-text);
+    cursor: pointer;
+}
+
+.joopeterewb-filter-hint {
+    margin: 0 !important;
+    font-size: 12px !important;
+    line-height: 1.45;
+    color: var(--joopeterewb-text-secondary);
 }
 
 /* Sidebar metabox footer */

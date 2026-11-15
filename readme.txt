@@ -3,7 +3,7 @@ Contributors: micromax2
 Tags: woocommerce, email, product, customers, marketing
 Requires at least: 7.0
 Tested up to: 7.1
-Stable tag: 1.3.9
+Stable tag: 1.4.0
 Requires PHP: 7.4
 WC requires at least: 6.0
 WC tested up to: 11.3.0
@@ -18,8 +18,9 @@ JooPeter Email to Product Buyers for WooCommerce is a lightweight and efficient 
 
 Key Features:
 
-* **Targeted Emails**: Automatically fetches customers who have purchased the current product.
-* **Dynamic Order Status Chips**: Toggle order status filters (Processing, On Hold, Completed) with real-time customer counts.
+* **Targeted Emails**: Automatically fetches customers who have purchased the current product, with an option to include buyers of other products.
+* **Dynamic Order Status Chips**: Toggle order status filters (Processing, On Hold, Completed, Cancelled) with real-time customer counts.
+* **Multi-Select Order Year Filter**: Filter recipients by "All Years" or one or more specific order years.
 * **Chunked AJAX Batch Sending**: Dispatches emails in batches (e.g. 10 at a time) to prevent server timeout errors and spikes.
 * **Control Center (JooPeter Email Panel)**: Centralized admin dashboard under Tools menu to manage logs and settings.
 * **Email Logs History**: Tracks total, successful, and failed email dispatches with statistical cards.
@@ -57,6 +58,13 @@ You can customize log retention settings under the Permissions & Settings tab to
 Yes, the plugin features a cancelable 10-second countdown. If you click send and realize there is an issue, you can click the red "Cancel Send" button before the timer hits zero to safely abort the send.
 
 == Changelog ==
+
+= 1.4.0 =
+* Added "Cancelled" order status filter chip (unselected by default).
+* Added multi-select Order Year filter chips ("All Years" default plus available order years).
+* Added "Include non-buyers of this product" checkbox to include buyers of other products matching the active status and year filters.
+* Upgraded filter chips and checkbox markup for keyboard navigation and screen reader accessibility.
+* Updated object cache keys and order hook invalidation for cancelled orders, order years, and store-wide buyer queries.
 
 = 1.3.9 =
 * Declared full compatibility with WooCommerce 11.3.0.

@@ -77,13 +77,41 @@ jQuery(document).ready(function($) {
        Product Edit Meta Box Logic
        ========================================================================== */
 
-    // Helper to retrieve selected statuses from active chips
+    // Helper to retrieve selected statuses from active status chips
     function getSelectedStatuses() {
         var statuses = [];
-        $('.joopeterewb-chip.active').each(function() {
+        $('.joopeterewb-status-chip.active').each(function() {
             statuses.push($(this).data('status'));
         });
         return statuses;
+    }
+
+    // Helper to retrieve selected specific years (empty array means All Years)
+    function getSelectedYears() {
+        var years = [];
+        $('.joopeterewb-year-chip.active').each(function() {
+            var yearVal = $(this).data('year');
+            if (yearVal && yearVal !== 'all') {
+                years.push(yearVal);
+            }
+        });
+        return years;
+    }
+
+    // Helper to check if non-buyers (buyers of other products) should be included
+    function getIncludeNonBuyers() {
+        return $('#joopeterewb_include_non_buyers').is(':checked');
+    }
+
+    // Lock or unlock composer inputs and filter controls during countdown/sending
+    function setComposerFiltersLocked(locked) {
+        $('#joopeterewb_email_subject').prop('disabled', locked);
+        if ( typeof tinyMCE !== 'undefined' && tinyMCE.get('joopeterewb_email_message') ) {
+            tinyMCE.get('joopeterewb_email_message').setMode(locked ? 'readonly' : 'design');
+        }
+        $('.joopeterewb-chip').prop('disabled', locked);
+        $('#joopeterewb_include_non_buyers').prop('disabled', locked);
+        $('#joopeterewb_refresh_count_btn').prop('disabled', locked);
     }
 
     // Handle Email Sending from Product Edit Sidebar
@@ -96,7 +124,7 @@ jQuery(document).ready(function($) {
             // Cancel clicked!
             clearInterval(countdownTimer);
             sendTimerActive = false;
-            
+
             // If cancel was clicked during a retry, restore the retry button state
             if ( isRetryActive ) {
                 isRetryActive = false;
@@ -104,15 +132,10 @@ jQuery(document).ready(function($) {
                     $('#joopeterewb_retry_failed_meta_btn').show();
                 }
             }
-            
-            $btn.removeClass('joopeterewb-countdown-active button-link-delete').addClass('button-primary').text('Send Email');
-            $('#joopeterewb_email_subject').prop('disabled', false);
-            if ( typeof tinyMCE !== 'undefined' && tinyMCE.get('joopeterewb_email_message') ) {
-                tinyMCE.get('joopeterewb_email_message').setMode('design');
-            }
-            $('.joopeterewb-chip').css('pointer-events', 'auto');
-            $('#joopeterewb_refresh_count_btn').prop('disabled', false);
-            
+
+            $btn.removeClass('joopeterewb-countdown-active button-link-delete').addClass('button-primary').text(joopeterewb_params.strings.send_email || 'Send Email');
+            setComposerFiltersLocked(false);
+
             var $feedback = $('#joopeterewb-email-feedback');
             $feedback.show().removeClass('notice-warning notice-success notice-error').addClass('notice notice-info').html('<p>Dispatch paused. No emails were sent.</p>');
             return;
@@ -123,13 +146,15 @@ jQuery(document).ready(function($) {
             tinyMCE.triggerSave();
         }
 
-        var subject   = $('#joopeterewb_email_subject').val();
-        var message   = $('#joopeterewb_email_message').val();
-        var post_id   = joopeterewb_params.product_id;
-        var nonce     = joopeterewb_params.nonce;
-        var $spinner  = $('#joopeterewb_email_spinner');
-        var $feedback = $('#joopeterewb-email-feedback');
-        var statuses  = getSelectedStatuses();
+        var subject          = $('#joopeterewb_email_subject').val();
+        var message          = $('#joopeterewb_email_message').val();
+        var post_id          = joopeterewb_params.product_id;
+        var nonce            = joopeterewb_params.nonce;
+        var $spinner         = $('#joopeterewb_email_spinner');
+        var $feedback        = $('#joopeterewb-email-feedback');
+        var statuses         = getSelectedStatuses();
+        var years            = getSelectedYears();
+        var includeNonBuyers = getIncludeNonBuyers();
 
         if ( ! subject || ! message ) {
             alert( joopeterewb_params.strings.empty_fields );
@@ -140,12 +165,8 @@ jQuery(document).ready(function($) {
             return;
         }
 
-        if ( statuses.length === 0 ) {
-            alert('Please select at least one order status.');
-            isRetryActive = false;
-            if ( failedEmailsList.length > 0 ) {
-                $('#joopeterewb_retry_failed_meta_btn').show();
-            }
+        if ( ! isRetryActive && statuses.length === 0 ) {
+            alert( joopeterewb_params.strings.select_status || 'Please select at least one order status.' );
             return;
         }
 
@@ -156,7 +177,10 @@ jQuery(document).ready(function($) {
         }
 
         var bypassConfirm = isRetryActive;
-        if ( ! bypassConfirm && ! confirm( joopeterewb_params.strings.confirm_send ) ) {
+        var confirmPrompt = includeNonBuyers
+            ? (joopeterewb_params.strings.confirm_send_non_buyers || joopeterewb_params.strings.confirm_send)
+            : joopeterewb_params.strings.confirm_send;
+        if ( ! bypassConfirm && ! confirm( confirmPrompt ) ) {
             return;
         }
 
@@ -165,13 +189,8 @@ jQuery(document).ready(function($) {
         var countdown = 10;
 
         $btn.addClass('joopeterewb-countdown-active button-link-delete').removeClass('button-primary').text('Cancel Send (' + countdown + 's)');
-        $('#joopeterewb_email_subject').prop('disabled', true);
-        if ( typeof tinyMCE !== 'undefined' && tinyMCE.get('joopeterewb_email_message') ) {
-            tinyMCE.get('joopeterewb_email_message').setMode('readonly');
-        }
-        $('.joopeterewb-chip').css('pointer-events', 'none');
-        $('#joopeterewb_refresh_count_btn').prop('disabled', true);
-        
+        setComposerFiltersLocked(true);
+
         // Render counting info and linear progress bar
         $feedback.show().removeClass('notice-error notice-success notice-info').addClass('notice notice-warning').html(
             '<p>Preparing dispatch... Launching in <strong id="joopeterewb-countdown-seconds">10</strong> seconds. Click "Cancel Send" to abort.</p>' +
@@ -199,13 +218,13 @@ jQuery(document).ready(function($) {
                 batchSendingActive = true;
 
                 // Restore button state for active send
-                $btn.removeClass('joopeterewb-countdown-active button-link-delete').addClass('button-primary').prop('disabled', true).text('Sending...');
+                $btn.removeClass('joopeterewb-countdown-active button-link-delete').addClass('button-primary').prop('disabled', true).text(joopeterewb_params.strings.sending || 'Sending...');
                 $spinner.addClass('is-active');
                 $feedback.hide().removeClass('notice-warning');
 
                 var totalSuccessCount = 0;
                 var totalFailedCount = 0;
-                
+
                 var currentEmailsList = [];
                 var usingRetryList = isRetryActive;
                 if ( usingRetryList ) {
@@ -223,7 +242,10 @@ jQuery(document).ready(function($) {
                         subject: subject,
                         message: message,
                         security: nonce,
+                        filters_submitted: 1,
                         statuses: statuses,
+                        include_non_buyers: includeNonBuyers ? 1 : 0,
+                        years: years,
                         offset: offset,
                         limit: 10
                     };
@@ -254,14 +276,9 @@ jQuery(document).ready(function($) {
                                 } else {
                                     // Finished sending all batches
                                     $spinner.removeClass('is-active');
-                                    $btn.prop('disabled', false).text('Send Email');
-                                    $('#joopeterewb_email_subject').prop('disabled', false);
-                                    if ( typeof tinyMCE !== 'undefined' && tinyMCE.get('joopeterewb_email_message') ) {
-                                        tinyMCE.get('joopeterewb_email_message').setMode('design');
-                                    }
-                                    $('.joopeterewb-chip').css('pointer-events', 'auto');
-                                    $('#joopeterewb_refresh_count_btn').prop('disabled', false);
-                                    
+                                    $btn.prop('disabled', false).text(joopeterewb_params.strings.send_email || 'Send Email');
+                                    setComposerFiltersLocked(false);
+
                                     batchSendingActive = false;
                                     isRetryActive = false;
 
@@ -288,14 +305,9 @@ jQuery(document).ready(function($) {
                                 }
                             } else {
                                 $spinner.removeClass('is-active');
-                                $btn.prop('disabled', false).text('Send Email');
-                                $('#joopeterewb_email_subject').prop('disabled', false);
-                                if ( typeof tinyMCE !== 'undefined' && tinyMCE.get('joopeterewb_email_message') ) {
-                                    tinyMCE.get('joopeterewb_email_message').setMode('design');
-                                }
-                                $('.joopeterewb-chip').css('pointer-events', 'auto');
-                                $('#joopeterewb_refresh_count_btn').prop('disabled', false);
-                                
+                                $btn.prop('disabled', false).text(joopeterewb_params.strings.send_email || 'Send Email');
+                                setComposerFiltersLocked(false);
+
                                 batchSendingActive = false;
                                 isRetryActive = false;
 
@@ -304,14 +316,9 @@ jQuery(document).ready(function($) {
                         },
                         error: function() {
                             $spinner.removeClass('is-active');
-                            $btn.prop('disabled', false).text('Send Email');
-                            $('#joopeterewb_email_subject').prop('disabled', false);
-                            if ( typeof tinyMCE !== 'undefined' && tinyMCE.get('joopeterewb_email_message') ) {
-                                tinyMCE.get('joopeterewb_email_message').setMode('design');
-                            }
-                            $('.joopeterewb-chip').css('pointer-events', 'auto');
-                            $('#joopeterewb_refresh_count_btn').prop('disabled', false);
-                            
+                            $btn.prop('disabled', false).text(joopeterewb_params.strings.send_email || 'Send Email');
+                            setComposerFiltersLocked(false);
+
                             batchSendingActive = false;
                             isRetryActive = false;
 
@@ -347,11 +354,19 @@ jQuery(document).ready(function($) {
 
     // Helper to trigger customer count refresh
     function triggerRefreshCount(isManualClick) {
-        var $btn    = $('#joopeterewb_refresh_count_btn');
-        var $icon   = $btn.find('.dashicons');
-        var post_id = joopeterewb_params.product_id;
-        var nonce   = joopeterewb_params.nonce;
-        var statuses = getSelectedStatuses();
+        var $btn             = $('#joopeterewb_refresh_count_btn');
+        var $icon            = $btn.find('.dashicons');
+        var post_id          = joopeterewb_params.product_id;
+        var nonce            = joopeterewb_params.nonce;
+        var statuses         = getSelectedStatuses();
+        var years            = getSelectedYears();
+        var includeNonBuyers = getIncludeNonBuyers();
+
+        if ( statuses.length === 0 ) {
+            $('#joopeterewb-count-value').text('0');
+            $('#joopeterewb-count-label').text(joopeterewb_params.strings.customer_plural || 'customers found');
+            return;
+        }
 
         $btn.prop('disabled', true);
         $icon.addClass('joopeterewb-spin');
@@ -363,7 +378,10 @@ jQuery(document).ready(function($) {
                 action: 'joopeterewb_refresh_customer_count',
                 product_id: post_id,
                 security: nonce,
-                statuses: statuses
+                filters_submitted: 1,
+                statuses: statuses,
+                include_non_buyers: includeNonBuyers ? 1 : 0,
+                years: years
             },
             success: function(response) {
                 $btn.prop('disabled', false);
@@ -394,9 +412,35 @@ jQuery(document).ready(function($) {
         triggerRefreshCount(true);
     });
 
-    // Chip click toggle and auto-refresh count
-    $('.joopeterewb-chip').on('click', function() {
-        $(this).toggleClass('active');
+    // Status chip click toggle and auto-refresh count
+    $('.joopeterewb-status-chip').on('click', function() {
+        var $chip = $(this);
+        var nextActive = !$chip.hasClass('active');
+        $chip.toggleClass('active', nextActive).attr('aria-pressed', nextActive ? 'true' : 'false');
+        triggerRefreshCount(false);
+    });
+
+    // Year chip click toggle (multi-select specific years or All Years) and auto-refresh count
+    $('.joopeterewb-year-chip').on('click', function() {
+        var $chip = $(this);
+        var $allChip = $('.joopeterewb-year-all');
+
+        if ($chip.data('year') === 'all') {
+            $('.joopeterewb-year-chip').not($allChip).removeClass('active').attr('aria-pressed', 'false');
+            $allChip.addClass('active').attr('aria-pressed', 'true');
+        } else {
+            var nextActive = !$chip.hasClass('active');
+            $chip.toggleClass('active', nextActive).attr('aria-pressed', nextActive ? 'true' : 'false');
+
+            var hasSpecificYears = $('.joopeterewb-year-chip').not($allChip).filter('.active').length > 0;
+            $allChip.toggleClass('active', !hasSpecificYears).attr('aria-pressed', hasSpecificYears ? 'false' : 'true');
+        }
+
+        triggerRefreshCount(false);
+    });
+
+    // Include non-buyers checkbox change triggers auto-refresh count
+    $('#joopeterewb_include_non_buyers').on('change', function() {
         triggerRefreshCount(false);
     });
 
